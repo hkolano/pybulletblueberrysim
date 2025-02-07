@@ -1,14 +1,14 @@
 import xml.etree.ElementTree as ET
 import csv
+import os
 
 round_limit = 5
 
-
-
-CSV_FILE = f'/home/chelse/Documents/research/WholeBranchBush6Branch2urdfSingleValues.csv'
+current_directory = os.path.dirname(__file__)
+CSV_FILENAME = os.path.join(current_directory, '..', 'data', 'WholeBranchBush6Branch2urdfSingleValues.csv')
 
 # Read data from the CSV file
-with open(CSV_FILE, 'r') as file:
+with open(CSV_FILENAME, 'r') as file:
     reader = csv.reader(file)
     next(reader)  # Skip the header row
     for row in reader:
