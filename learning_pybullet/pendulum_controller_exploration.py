@@ -7,7 +7,7 @@ dt = .01 # pybullet simulation step
 q0 = 0.5   # starting position (radian)
 physicsClient = p.connect(p.GUI) # or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
-p.setGravity(0,0,-10)
+p.setGravity(0,0,0)
 planeId = p.loadURDF("plane.urdf")
 pd = p.loadPlugin("pdControlPlugin")
 
@@ -27,8 +27,8 @@ p.addUserDebugText("PD Ctrl", textOffset,
                    parentObjectUniqueId=pend_pd,
                    parentLinkIndex=0)
 
-
-angularDampingSlider = p.addUserDebugParameter("angularDamping", 0, 1, 0)
+kpSlider = p.addUserDebugParameter("KpBranch", 0, 10, 1)
+kdSlider = p.addUserDebugParameter("KdBranch", 0, .5, .1)
 
 # go to the starting position
 p.setJointMotorControl2(bodyIndex=pend_pos, jointIndex=1, targetPosition=q0, controlMode=p.POSITION_CONTROL)
@@ -39,11 +39,25 @@ for _ in range(1000):
 # turn off the motor for the free motion
 p.setJointMotorControl2(bodyIndex=pend_pos, jointIndex=1, targetVelocity=0, controlMode=p.VELOCITY_CONTROL, force=0)
 p.setJointMotorControl2(bodyIndex=pend_pd, jointIndex=1, targetVelocity=0, controlMode=p.VELOCITY_CONTROL, force=0)
-p.setRealTimeSimulation(1)
+# p.setRealTimeSimulation(1)
 while True:
-    angularDamping = p.readUserDebugParameter(angularDampingSlider)
-    p.changeDynamics(pend_pos, 1, angularDamping=angularDamping)
-    p.changeDynamics(pend_pd, 1, angularDamping=angularDamping)
+    Kp = p.readUserDebugParameter(kpSlider)
+    Kd = p.readUserDebugParameter(kdSlider)
+
+    p.setJointMotorControl2(bodyUniqueId=pend_pos,
+                            jointIndex=1,
+                            controlMode=p.POSITION_CONTROL,
+                            targetVelocity=0,
+                            targetPosition=0,
+                            positionGain=Kp,
+                            velocityGain=Kd)
+    p.setJointMotorControl2(bodyUniqueId=pend_pd,
+                            jointIndex=1,
+                            controlMode=p.PD_CONTROL,
+                            targetVelocity=0,
+                            targetPosition=0,
+                            positionGain=Kp,
+                            velocityGain=Kd)
     p.stepSimulation()
     time.sleep(dt)
 p.disconnect()
