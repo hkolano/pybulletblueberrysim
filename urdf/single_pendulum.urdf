@@ -1,26 +1,36 @@
 <?xml version='1.0' encoding='utf-8'?>
-<robot name="blueberry_plant">
+<robot name="single_pendulum">
+
+	<link name="world"/>
+	<joint name="world_to_base"
+		   type="fixed">
+		<parent link="world" />
+		<child link="base_link" />
+		<origin xyz="0 0 1.5"
+				rpy="0 0 0" />
+		<axis xyz="0 0 0" />
+	</joint>
+	
 
 	<!-- - - - - - --> 
-	<!-- Base link -->
+	<!-- Base cube -->
 	<!-- - - - - - -->
 	
 	<link name="base_link">
 		<inertial>
-			<mass value="100000" />
-			<inertia ixx="6333.33333" 
+			<mass value="0" />
+			<inertia ixx="0.0" 
 					 ixy="0.0" 
 					 ixz="0.0" 
-					 iyy="6333.33333" 
+					 iyy="0.0" 
 					 iyz="0.0" 
-					 izz="12500.0" />
+					 izz="0.0" />
 		</inertial>
 		<visual>
 			<origin xyz="0 0 0" 
 					rpy="0 0 0" />
 			<geometry>
-				<cylinder length="0.05" 
-						  radius="0.5" />
+				<box size=".05 .05 .05"/>
 			</geometry>
 			<material name="blue">
 				<color rgba="0 0 1 1" />
@@ -30,8 +40,7 @@
 			<origin xyz="0 0 0" 
 					rpy="0 0 0" />
 			<geometry>
-				<cylinder length="0.05" 
-						  radius="0.5" />
+				<box size=".05 .05 .05" />
 			</geometry>
 		</collision>
 	</link>
@@ -44,13 +53,12 @@
 		   type="revolute">
 		<parent link="base_link" />
 		<child link="branch_link" />
-		<axis xyz="0 1 0" />
-		<origin xyz="0 0 0.05" 
+		<origin xyz="0 0 0"
 				rpy="0 0 0" />
-		<limit lower="-1.57" 
-			   upper="1.57" 
-			   effort="10" 
-			   velocity="1.0" />
+		<axis xyz="0 1 0" />
+		<limit effort="0" 
+			   velocity="0"/>
+		<dynamics damping="0" friction="0"/>
 	</joint>
 
 	<!-- - - - - - - -->
@@ -66,9 +74,10 @@
 					 iyy="0.01051" 
 					 iyz="0.0" 
 					 izz="9.338e-07" />
+			<origin xyz="0 0 .395" />
 		</inertial>
 		<visual>
-			<origin xyz="0 0 0.025" 
+			<origin xyz="0 0 .395" 
 					rpy="0 0 0" />
 			<geometry>
 				<cylinder length="0.79" 
@@ -79,7 +88,7 @@
 			</material>
 		</visual>
 		<collision>
-			<origin xyz="0 0 0.025" 
+			<origin xyz="0 0 .395" 
 					rpy="0 0 0" />
 			<geometry>
 				<cylinder length="0.79" 
