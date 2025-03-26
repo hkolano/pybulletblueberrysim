@@ -13,28 +13,65 @@ class MainWindow(QMainWindow):
     def __init__(self, sim, *args, **kwargs):
         '''initializes a plot at all zeros'''
         super(MainWindow, self).__init__(*args, **kwargs)
-        QThread.__init__(self)
-        self.graphWidget = pg.PlotWidget()
-        self.setCentralWidget(self.graphWidget)
-
-        # self.update_func = update_func
-        # print(self.update_func)
         self.sim = sim
+        self.win = pg.GraphicsLayoutWidget(show=True, title="Simulation Readouts")
 
+        # Universal setup for all plots
+        pg.setConfigOptions(antialias=True)
+        pen = pg.mkPen(color=(0, 0, 255))
+        self.win.setBackground('w')
+        self.win.resize(1000,600)
+      
         x_timespan_secs = 2
         self.x = np.linspace(-1*x_timespan_secs+dt, 0, int(x_timespan_secs/dt))
         self.y = np.zeros(len(self.x))
+        self.y2 = np.zeros(len(self.x))
+        self.Fxs = np.zeros(len(self.x))
+        self.Fzs = np.zeros(len(self.x))
+        self.Mys = np.zeros(len(self.x))
+
+        # Position plot
+        self.p_pos_plot = self.win.addPlot(title="Pend Position")
+        self.pos_data_line = self.p_pos_plot.plot(x=self.x, y=self.y, pen=pen)
+        # self.p_pos_plot.setYRange(-0.5, 0.5, padding=0)
+        self.p_pos_plot.setLabel('bottom', "Time (s)", unit='s')
+        self.p_pos_plot.setLabel('left', "Position (rad)", unit='rad')
+
+        # Velocity plot
+        self.p_vel_plot = self.win.addPlot(title="Pend Velocity")
+        self.vel_data_line = self.p_vel_plot.plot(x=self.x, y=self.y2, pen=pen)
+        # self.p_vel_plot.setYRange(-1, 1, padding=0)
+        self.p_vel_plot.setLabel('bottom', "Time (s)", unit='s')
+        self.p_vel_plot.setLabel('left', "Velocity (rad/s)", unit='rad/s')
+
+        self.win.nextRow()
+        self.Fx_plot = self.win.addPlot(title="Reaction Force X")
+        self.Fx_line = self.Fx_plot.plot(x=self.x, y=self.Fxs, pen=pen)
+        # self.Fx_plot.setYRange(-1, 1, padding=0)
+        self.Fx_plot.setLabel('bottom', "Time (s)", unit='s')
+        self.Fx_plot.setLabel('left', "Fx (N)", unit='N')
+
+        self.Fz_plot = self.win.addPlot(title="Reaction Force Z")
+        self.Fz_line = self.Fz_plot.plot(x=self.x, y=self.Fzs, pen=pen)
+        # self.Fz_plot.setYRange(-1, 1, padding=0)
+        self.Fz_plot.setLabel('bottom', "Time (s)", unit='s')
+        self.Fz_plot.setLabel('left', "Fz (N)", unit='N')
+
+        self.My_plot = self.win.addPlot(title="Reaction Moment Y")
+        self.My_line = self.My_plot.plot(x=self.x, y=self.Mys, pen=pen)
+        # self.My_plot.setYRange(-.1, .1, padding=0)
+        self.My_plot.setLabel('bottom', "Time (s)", unit='s')
+        self.My_plot.setLabel('left', "My (Nm)", unit='Nm')
+
         
-        self.graphWidget.setBackground('w')
-        
-        pen = pg.mkPen(color=(0, 0, 255))
-        self.data_line = self.graphWidget.plot(self.x, self.y, pen=pen)
+        # Perform the loop and call the simulation         
         self.timer = QTimer()
         self.timer.setInterval(int(1/dt))
         self.timer.timeout.connect(self.update_plot_data)
         self.timer.start()
         
     def update_plot_data(self):
+        # Update the time 
         self.x = self.x[1:]  
         self.x = np.append(self.x, self.x[-1] + dt)
         
@@ -42,8 +79,28 @@ class MainWindow(QMainWindow):
         data = self.sim.step_simulation()
         new_y_pt = data[-1]['poses']
         self.y = np.append(self.y, new_y_pt)
+
+        self.y2 = self.y2[1:]
+        new_y2_pt = data[-1]['vels']
+        self.y2 = np.append(self.y2, new_y2_pt)
+
+        self.Fxs = self.Fxs[1:]
+        new_Fx = data[-1]['RFx']
+        self.Fxs = np.append(self.Fxs, new_Fx)
+
+        self.Fzs = self.Fzs[1:]
+        new_Fz = data[-1]['RFz']
+        self.Fzs = np.append(self.Fzs, new_Fz)
+
+        self.Mys = self.Mys[1:]
+        new_My = data[-1]['RMy']
+        self.Mys = np.append(self.Mys, new_My)
         
-        self.data_line.setData(self.x, self.y)
+        self.pos_data_line.setData(self.x, self.y)
+        self.vel_data_line.setData(self.x, self.y2)
+        self.Fx_line.setData(self.x, self.Fxs)
+        self.Fz_line.setData(self.x, self.Fzs)
+        self.My_line.setData(self.x, self.Mys)
 
 class SinglePendulumSim():
     def __init__(self):
@@ -166,6 +223,6 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     sim = SinglePendulumSim() # start simulation
     window = MainWindow(sim)
-    window.show()
+    # window.show()
   
     sys.exit(app.exec_())
