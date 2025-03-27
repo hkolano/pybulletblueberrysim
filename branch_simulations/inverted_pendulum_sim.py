@@ -103,7 +103,7 @@ class MainWindow(QMainWindow):
         self.My_line.setData(self.x, self.Mys)
 
 class MultiPendulumSim():
-    def __init__(self):
+    def __init__(self, urdf_path):
         # Environment Parameters
         physicsClient = p.connect(p.GUI)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -115,7 +115,7 @@ class MultiPendulumSim():
                              cameraTargetPosition=[0, -.5, 0])
 
         # Load in pendulum
-        self.pend = p.loadURDF("urdf/double_pendulum.urdf", [0, 0, 0], useFixedBase=True)
+        self.pend = p.loadURDF(urdf_path, [0, 0, 0], useFixedBase=True)
         self.n_joints = p.getNumJoints(self.pend)
         self.ctrl_jt_idxs = list(range(self.n_joints))[1:] # the list of joints idxs we can actually control (not fixed joints)
         # will have to change the above if adding any artificial fixed joints 
@@ -150,18 +150,21 @@ class MultiPendulumSim():
 
     def run_simulation(self):
         while p.isConnected():
-            Kp = p.readUserDebugParameter(self.kpSlider)
-            Kd = p.readUserDebugParameter(self.kdSlider)
-
-            p.setJointMotorControlArray(bodyUniqueId=self.pend,
-                                    jointIndices=self.ctrl_jt_idxs,
-                                    controlMode=p.PD_CONTROL,
-                                    targetVelocities=[0]*len(self.ctrl_jt_idxs),
-                                    targetPositions=[0]*len(self.ctrl_jt_idxs),
-                                    positionGains=[Kp]*len(self.ctrl_jt_idxs),
-                                    velocityGains=[Kd]*len(self.ctrl_jt_idxs))
-            p.stepSimulation()
+            self.do_simulation_step()
             time.sleep(dt)
+
+    def do_simulation_step(self):
+        Kp = p.readUserDebugParameter(self.kpSlider)
+        Kd = p.readUserDebugParameter(self.kdSlider)
+
+        p.setJointMotorControlArray(bodyUniqueId=self.pend,
+                                jointIndices=self.ctrl_jt_idxs,
+                                controlMode=p.PD_CONTROL,
+                                targetVelocities=[0]*len(self.ctrl_jt_idxs),
+                                targetPositions=[0]*len(self.ctrl_jt_idxs),
+                                positionGains=[Kp]*len(self.ctrl_jt_idxs),
+                                velocityGains=[Kd]*len(self.ctrl_jt_idxs))
+        p.stepSimulation()
 
 class SinglePendulumSim():
     def __init__(self):
@@ -291,5 +294,5 @@ if __name__ == '__main__':
     # # window.show()
   
     # sys.exit(app.exec_())
-    sim = MultiPendulumSim()
+    sim = MultiPendulumSim("urdf/triple_pendulum.urdf")
     # print(sim.n_joints)
