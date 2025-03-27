@@ -102,6 +102,67 @@ class MainWindow(QMainWindow):
         self.Fz_line.setData(self.x, self.Fzs)
         self.My_line.setData(self.x, self.Mys)
 
+class MultiPendulumSim():
+    def __init__(self):
+        # Environment Parameters
+        physicsClient = p.connect(p.GUI)
+        p.setAdditionalSearchPath(pybullet_data.getDataPath())
+        p.setGravity(0,0,-10)
+        planeId = p.loadURDF("plane.urdf")
+        p.resetDebugVisualizerCamera(cameraDistance=2,
+                             cameraYaw=17.5,
+                             cameraPitch=-35,
+                             cameraTargetPosition=[0, -.5, 0])
+
+        # Load in pendulum
+        self.pend = p.loadURDF("urdf/double_pendulum.urdf", [0, 0, 0], useFixedBase=True)
+        self.n_joints = p.getNumJoints(self.pend)
+        self.ctrl_jt_idxs = list(range(self.n_joints))[1:] # the list of joints idxs we can actually control (not fixed joints)
+        # will have to change the above if adding any artificial fixed joints 
+        
+        # Move to inital position
+        boring_start_pos = [0.1]*(self.n_joints-1)
+        self.move_to_position(boring_start_pos)
+
+        # Set up global joint stiffness and damping parameters
+        self.kpSlider = p.addUserDebugParameter("KpBranch", 0, 7.5, 1.5)
+        self.kdSlider = p.addUserDebugParameter("KdBranch", 0, .5, .15)
+
+        self.run_simulation()
+
+
+    def move_to_position(self, pos_list):
+        # Go to the given position
+        p.setJointMotorControlArray(bodyUniqueId=self.pend, 
+                                    jointIndices=self.ctrl_jt_idxs, 
+                                    targetPositions=pos_list, 
+                                    targetVelocities=[0]*(self.n_joints-1),
+                                    controlMode=p.POSITION_CONTROL)
+        for _ in range(1000):
+            p.stepSimulation()
+        
+        # Turn the motor off for free motion 
+        p.setJointMotorControlArray(bodyUniqueId=self.pend, 
+                                    jointIndices=self.ctrl_jt_idxs, 
+                                    targetVelocities=[0]*(self.n_joints-1),
+                                    controlMode=p.VELOCITY_CONTROL,
+                                    forces=[0]*(self.n_joints-1))
+
+    def run_simulation(self):
+        while p.isConnected():
+            Kp = p.readUserDebugParameter(self.kpSlider)
+            Kd = p.readUserDebugParameter(self.kdSlider)
+
+            p.setJointMotorControlArray(bodyUniqueId=self.pend,
+                                    jointIndices=self.ctrl_jt_idxs,
+                                    controlMode=p.PD_CONTROL,
+                                    targetVelocities=[0]*len(self.ctrl_jt_idxs),
+                                    targetPositions=[0]*len(self.ctrl_jt_idxs),
+                                    positionGains=[Kp]*len(self.ctrl_jt_idxs),
+                                    velocityGains=[Kd]*len(self.ctrl_jt_idxs))
+            p.stepSimulation()
+            time.sleep(dt)
+
 class SinglePendulumSim():
     def __init__(self):
         # Environment Parameters
@@ -110,6 +171,10 @@ class SinglePendulumSim():
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(0,0,-10)
         planeId = p.loadURDF("plane.urdf")
+        p.resetDebugVisualizerCamera(cameraDistance=2,
+                             cameraYaw=17.5,
+                             cameraPitch=-35,
+                             cameraTargetPosition=[0, -.5, 0])
 
         # Set up data collection
         self.data = []
@@ -220,9 +285,11 @@ if __name__ == '__main__':
     # Environmental parameters
     dt = .05 # pybullet simulation step
 
-    app = QApplication(sys.argv)
-    sim = SinglePendulumSim() # start simulation
-    window = MainWindow(sim)
-    # window.show()
+    # app = QApplication(sys.argv)
+    # sim = SinglePendulumSim() # start simulation
+    # window = MainWindow(sim)
+    # # window.show()
   
-    sys.exit(app.exec_())
+    # sys.exit(app.exec_())
+    sim = MultiPendulumSim()
+    # print(sim.n_joints)
