@@ -1,0 +1,149 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="single_pendulum">
+
+	<link name="world"/>
+	<joint name="world_to_base"
+		   type="fixed">
+		<parent link="world" />
+		<child link="base_link" />
+		<origin xyz="-.115 0 0"
+				rpy="0 0 0" />
+		<axis xyz="0 0 0" />
+	</joint>
+	
+
+	<!-- - - - - - --> 
+	<!-- Base cube -->
+	<!-- - - - - - -->
+	
+	<link name="base_link">
+		<inertial>
+			<mass value="0" />
+			<inertia ixx="0.0" 
+					 ixy="0.0" 
+					 ixz="0.0" 
+					 iyy="0.0" 
+					 iyz="0.0" 
+					 izz="0.0" />
+		</inertial>
+		<visual>
+			<origin xyz="0 0 0" 
+					rpy="0 0 0" />
+			<geometry>
+				<box size=".05 .05 .05"/>
+			</geometry>
+			<material name="red">
+				<color rgba="1 0 0 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0" 
+					rpy="0 0 0" />
+			<geometry>
+				<box size=".05 .05 .05" />
+			</geometry>
+		</collision>
+	</link>
+
+	<!-- - - - - - - -->
+	<!-- Prismatic Joint -->
+	<!-- - - - - - - -->
+	
+	<joint name="base_joint" 
+		   type="prismatic">
+		<parent link="base_link" />
+		<child link="probe_link" />
+		<origin xyz="0 0 0"
+				rpy="0 0 0" />
+		<axis xyz="1 0 0" />
+		<limit effort="0" 
+			   velocity="0"/>
+		<dynamics damping="0" friction="0"/>
+	</joint>
+
+	<!-- - - - - - - -->
+	<!-- Probe part -->
+	<!-- - - - - - - -->
+	
+	<link name="probe_link">
+		<inertial>
+			<mass value="0.05" />
+			<inertia ixx="0.01" 
+					 ixy="0.0" 
+					 ixz="0.0" 
+					 iyy="0.01" 
+					 iyz="0.0" 
+					 izz="0.01" />
+			<origin xyz=".05 0 0" />
+		</inertial>
+		<visual>
+			<origin xyz=".05 0 0" 
+					rpy="0 1.570795 0" />
+			<geometry>
+				<cylinder length="0.1" 
+						  radius="0.005" />
+			</geometry>
+			<material name="red">
+				<color rgba="1 0 0 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0.05 0 0" 
+					rpy="0 1.570795 0" />
+			<geometry>
+				<cylinder length="0.1" 
+						  radius="0.005" />
+			</geometry>
+		</collision>
+	</link>
+
+	<!-- - - - - - - -->
+	<!-- Fixed Joint -->
+	<!-- - - - - - - -->
+
+	<joint name="joint_sensor"
+		   type="fixed">
+		<parent link="probe_link" />
+		<child link="sensor_link" />
+		<origin xyz="0.1 0 0"
+				rpy="0 0 0" />
+		<axis xyz="0 0 1" />
+		<limit effort="0"
+			   velocity="0"/>
+		<dynamics damping="0" friction="0"/>
+	</joint>
+
+	<!-- - - - - - - -->
+	<!-- Sensor Link -->
+	<!-- - - - - - - -->
+
+	<link name="sensor_link">
+		<inertial>
+			<mass value="0.05" />
+			<inertia ixx="0.01"
+					 ixy="0.0"
+					 ixz="0.0"
+					 iyy="0.01"
+					 iyz="0.0"
+					 izz="0.01" />
+			<origin xyz=".05 0 0" />
+		</inertial>
+		<visual>
+			<origin xyz=".0 0 0"
+					rpy="0 0 0" />
+			<geometry>
+				<sphere radius="0.01" />
+			</geometry>
+			<material name="red">
+				<color rgba="1 0 0 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0"
+					rpy="0 0 0" />
+			<geometry>
+				<sphere radius="0.01" />
+			</geometry>
+		</collision>
+	</link>
+</robot>

@@ -1,3 +1,4 @@
+from turtle import pendown
 import pybullet as p
 import time
 import pybullet_data
@@ -27,22 +28,22 @@ class MainWindow(QMainWindow):
         self.y = np.zeros(len(self.x))
         self.y2 = np.zeros(len(self.x))
         self.Fxs = np.zeros(len(self.x))
+        self.Fys = np.zeros(len(self.x))
         self.Fzs = np.zeros(len(self.x))
-        self.Mys = np.zeros(len(self.x))
 
         # Position plot
-        self.p_pos_plot = self.win.addPlot(title="Pend Position")
+        self.p_pos_plot = self.win.addPlot(title="Probe Position")
         self.pos_data_line = self.p_pos_plot.plot(x=self.x, y=self.y, pen=pen)
         # self.p_pos_plot.setYRange(-0.5, 0.5, padding=0)
         self.p_pos_plot.setLabel('bottom', "Time (s)", unit='s')
         self.p_pos_plot.setLabel('left', "Position (rad)", unit='rad')
 
-        # Velocity plot
-        self.p_vel_plot = self.win.addPlot(title="Pend Velocity")
-        self.vel_data_line = self.p_vel_plot.plot(x=self.x, y=self.y2, pen=pen)
-        # self.p_vel_plot.setYRange(-1, 1, padding=0)
-        self.p_vel_plot.setLabel('bottom', "Time (s)", unit='s')
-        self.p_vel_plot.setLabel('left', "Velocity (rad/s)", unit='rad/s')
+        # # Velocity plot
+        # self.p_vel_plot = self.win.addPlot(title="Pend Velocity")
+        # self.vel_data_line = self.p_vel_plot.plot(x=self.x, y=self.y2, pen=pen)
+        # # self.p_vel_plot.setYRange(-1, 1, padding=0)
+        # self.p_vel_plot.setLabel('bottom', "Time (s)", unit='s')
+        # self.p_vel_plot.setLabel('left', "Velocity (rad/s)", unit='rad/s')
 
         self.win.nextRow()
         self.Fx_plot = self.win.addPlot(title="Reaction Force X")
@@ -51,17 +52,17 @@ class MainWindow(QMainWindow):
         self.Fx_plot.setLabel('bottom', "Time (s)", unit='s')
         self.Fx_plot.setLabel('left', "Fx (N)", unit='N')
 
+        # self.Fy_plot = self.win.addPlot(title="Reaction Force Y")
+        # self.Fy_line = self.Fy_plot.plot(x=self.x, y=self.Fys, pen=pen)
+        # # self.Fy_plot.setYRange(-1, 1, padding=0)
+        # self.Fy_plot.setLabel('bottom', "Time (s)", unit='s')
+        # self.Fy_plot.setLabel('left', "Fy (N)", unit='N')
+
         self.Fz_plot = self.win.addPlot(title="Reaction Force Z")
         self.Fz_line = self.Fz_plot.plot(x=self.x, y=self.Fzs, pen=pen)
-        # self.Fz_plot.setYRange(-1, 1, padding=0)
+        # self.Fz_plot.setYRange(-.1, .1, padding=0)
         self.Fz_plot.setLabel('bottom', "Time (s)", unit='s')
         self.Fz_plot.setLabel('left', "Fz (N)", unit='N')
-
-        self.My_plot = self.win.addPlot(title="Reaction Moment Y")
-        self.My_line = self.My_plot.plot(x=self.x, y=self.Mys, pen=pen)
-        # self.My_plot.setYRange(-.1, .1, padding=0)
-        self.My_plot.setLabel('bottom', "Time (s)", unit='s')
-        self.My_plot.setLabel('left', "My (Nm)", unit='Nm')
 
         
         # Perform the loop and call the simulation         
@@ -76,31 +77,31 @@ class MainWindow(QMainWindow):
         self.x = np.append(self.x, self.x[-1] + dt)
         
         self.y = self.y[1:]  
-        data = self.sim.step_simulation()
-        new_y_pt = data[-1]['poses']
+        data = self.sim.do_simulation_step()
+        new_y_pt = data[-1]['probe_pos']
         self.y = np.append(self.y, new_y_pt)
 
-        self.y2 = self.y2[1:]
-        new_y2_pt = data[-1]['vels']
-        self.y2 = np.append(self.y2, new_y2_pt)
+        # self.y2 = self.y2[1:]
+        # new_y2_pt = data[-1]['vels']
+        # self.y2 = np.append(self.y2, new_y2_pt)
 
         self.Fxs = self.Fxs[1:]
-        new_Fx = data[-1]['RFx']
+        new_Fx = data[-1]['probe_x']
         self.Fxs = np.append(self.Fxs, new_Fx)
 
-        self.Fzs = self.Fzs[1:]
-        new_Fz = data[-1]['RFz']
-        self.Fzs = np.append(self.Fzs, new_Fz)
+        # self.Fys = self.Fys[1:]
+        # new_Fy = data[-1]['probe_y']
+        # self.Fys = np.append(self.Fys, new_Fy)
 
-        self.Mys = self.Mys[1:]
-        new_My = data[-1]['RMy']
-        self.Mys = np.append(self.Mys, new_My)
+        self.Fzs = self.Fzs[1:]
+        new_Fz = data[-1]['probe_z']
+        self.Fzs = np.append(self.Fzs, new_Fz)
         
         self.pos_data_line.setData(self.x, self.y)
-        self.vel_data_line.setData(self.x, self.y2)
+        # self.vel_data_line.setData(self.x, self.y2)
         self.Fx_line.setData(self.x, self.Fxs)
+        # self.Fy_line.setData(self.x, self.Fys)
         self.Fz_line.setData(self.x, self.Fzs)
-        self.My_line.setData(self.x, self.Mys)
 
 class MultiPendulumSim():
     def __init__(self, urdf_path):
@@ -116,20 +117,28 @@ class MultiPendulumSim():
 
         # Load in pendulum
         self.pend = p.loadURDF(urdf_path, [0, 0, 0], useFixedBase=True)
+        self.probe = p.loadURDF("urdf/probe.urdf", [0, -0.5, 1.2], useFixedBase=True)
         self.n_joints = p.getNumJoints(self.pend)
         self.ctrl_jt_idxs = list(range(self.n_joints))[1:] # the list of joints idxs we can actually control (not fixed joints)
         # will have to change the above if adding any artificial fixed joints 
         
         # Move to inital position
-        boring_start_pos = [0.1]*(self.n_joints-1)
+        boring_start_pos = [0.0]*(self.n_joints-1)
         self.move_to_position(boring_start_pos)
 
         # Set up global joint stiffness and damping parameters
         self.kpSlider = p.addUserDebugParameter("KpBranch", 0, 7.5, 1.5)
         self.kdSlider = p.addUserDebugParameter("KdBranch", 0, .5, .15)
 
-        self.run_simulation()
+        p.enableJointForceTorqueSensor(bodyUniqueId=self.probe, jointIndex=2,enableSensor=True)
+        self.setup_df()
+        # self.run_simulation()
 
+    def setup_df(self):
+        self.col_names_ea_joint = ['pos', 'vel', 'Fx', 'Fz', 'My']
+        self.cols = ['time', 'probe_x', 'probe_y', 'probe_z']
+        self.data = []
+        self.data.append({'probe_pos':0,'probe_x':0, 'probe_z':0})
 
     def move_to_position(self, pos_list):
         # Go to the given position
@@ -164,7 +173,23 @@ class MultiPendulumSim():
                                 targetPositions=[0]*len(self.ctrl_jt_idxs),
                                 positionGains=[Kp]*len(self.ctrl_jt_idxs),
                                 velocityGains=[Kd]*len(self.ctrl_jt_idxs))
+
+        p.setJointMotorControl2(bodyUniqueId=self.probe,
+                                    jointIndex=1,
+                                    controlMode=p.VELOCITY_CONTROL,
+                                    targetVelocity=0.25)
+
+        [pos, _, _,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=1)
+        [_, _, reactf,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=2)
+        self.data.append({'probe_pos':pos,'probe_x':reactf[0],'probe_z':reactf[2]})
+
+        # p.applyExternalForce(objectUniqueId=self.pend, 
+        #                      linkIndex=2,
+        #                      forceObj=[0.2,0,0],
+        #                      posObj=[0,-0.5,1.2],
+        #                      flags=p.WORLD_FRAME)
         p.stepSimulation()
+        return self.data
 
 class SinglePendulumSim():
     def __init__(self):
@@ -288,11 +313,9 @@ if __name__ == '__main__':
     # Environmental parameters
     dt = .05 # pybullet simulation step
 
-    # app = QApplication(sys.argv)
-    # sim = SinglePendulumSim() # start simulation
-    # window = MainWindow(sim)
+    app = QApplication(sys.argv)
+    sim = MultiPendulumSim("urdf/double_pendulum.urdf")
+    window = MainWindow(sim)
     # # window.show()
   
-    # sys.exit(app.exec_())
-    sim = MultiPendulumSim("urdf/triple_pendulum.urdf")
-    # print(sim.n_joints)
+    sys.exit(app.exec_())
