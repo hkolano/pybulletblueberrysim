@@ -86,7 +86,7 @@ class MainWindow(QMainWindow):
         # self.y2 = np.append(self.y2, new_y2_pt)
 
         self.Fxs = self.Fxs[1:]
-        new_Fx = data[-1]['probe_x']
+        new_Fx = list(data['probe_ft_x'])[-1]
         self.Fxs = np.append(self.Fxs, new_Fx)
 
         # self.Fys = self.Fys[1:]
@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
         # self.Fys = np.append(self.Fys, new_Fy)
 
         self.Fzs = self.Fzs[1:]
-        new_Fz = data[-1]['probe_z']
+        new_Fz = list(data['probe_ft_z'])[-1]
         self.Fzs = np.append(self.Fzs, new_Fz)
         
         # self.pos_data_line.setData(self.x, self.y)
@@ -137,9 +137,15 @@ class MultiPendulumSim():
 
     def setup_df(self):
         self.col_names_ea_joint = ['pos', 'vel', 'Fx', 'Fz', 'My']
-        self.cols = ['time', 'probe_x', 'probe_y', 'probe_z']
+        self.cols = ['probe_pos', 'probe_ft_x', 'probe_ft_z']
         self.data = []
-        self.data.append({'probe_pos':0,'probe_x':0, 'probe_z':0})
+        self.data.append({'probe_pos':0,'probe_ft_x':0, 'probe_ft_z':0})
+        for i in self.ctrl_jt_idxs:
+            cols_to_add = [x + "_" + str(i) for x in self.col_names_ea_joint]
+            self.cols.extend(cols_to_add)
+        # first_vec = self.get_current_state()
+        self.df = pd.DataFrame(columns=self.cols)
+        self.add_current_state_to_df()
 
     def move_to_position(self, pos_list):
         # Go to the given position
@@ -180,9 +186,8 @@ class MultiPendulumSim():
                                     controlMode=p.VELOCITY_CONTROL,
                                     targetVelocity=0.25)
 
+        self.add_current_state_to_df()
         [pos, _, _,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=1)
-        [_, _, reactf,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=2)
-        self.data.append({'probe_pos':pos,'probe_x':reactf[0],'probe_z':reactf[2]})
 
         txt = "probePos=" + str(pos)
         prevTextId = self.probe_text
@@ -194,8 +199,23 @@ class MultiPendulumSim():
         #                      posObj=[0,-0.5,1.2],
         #                      flags=p.WORLD_FRAME)
         p.stepSimulation()
-        return self.data
-                            
+        return self.df
+
+    def get_current_state(self):
+        data_vec = []
+        [pos, _, _,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=1)
+        data_vec.append(pos)
+        [_, _, probeft,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=2)
+        data_vec.extend([probeft[0], probeft[2]])
+        for i in self.ctrl_jt_idxs:
+            [pos, vel, Rf, _] = p.getJointState(bodyUniqueId=self.pend, jointIndex=i)
+            resp = [pos, vel, Rf[0], Rf[2], Rf[4]]
+            data_vec.extend(resp)
+        return data_vec
+
+    def add_current_state_to_df(self):
+        self.df.loc[len(self.df)] = self.get_current_state()
+                                
 
 def plot_reaction_forces(df):
     """ Plots a 3 x 2 grid of the reaction forces for this run """
