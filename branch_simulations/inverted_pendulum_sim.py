@@ -32,11 +32,11 @@ class MainWindow(QMainWindow):
         self.Fzs = np.zeros(len(self.x))
 
         # Position plot
-        self.p_pos_plot = self.win.addPlot(title="Probe Position")
-        self.pos_data_line = self.p_pos_plot.plot(x=self.x, y=self.y, pen=pen)
+        # self.p_pos_plot = self.win.addPlot(title="Probe Position")
+        # self.pos_data_line = self.p_pos_plot.plot(x=self.x, y=self.y, pen=pen)
         # self.p_pos_plot.setYRange(-0.5, 0.5, padding=0)
-        self.p_pos_plot.setLabel('bottom', "Time (s)", unit='s')
-        self.p_pos_plot.setLabel('left', "Position (rad)", unit='rad')
+        # self.p_pos_plot.setLabel('bottom', "Time (s)", unit='s')
+        # self.p_pos_plot.setLabel('left', "Position (rad)", unit='rad')
 
         # # Velocity plot
         # self.p_vel_plot = self.win.addPlot(title="Pend Velocity")
@@ -45,7 +45,7 @@ class MainWindow(QMainWindow):
         # self.p_vel_plot.setLabel('bottom', "Time (s)", unit='s')
         # self.p_vel_plot.setLabel('left', "Velocity (rad/s)", unit='rad/s')
 
-        self.win.nextRow()
+        # self.win.nextRow()
         self.Fx_plot = self.win.addPlot(title="Reaction Force X")
         self.Fx_line = self.Fx_plot.plot(x=self.x, y=self.Fxs, pen=pen)
         # self.Fx_plot.setYRange(-1, 1, padding=0)
@@ -76,10 +76,10 @@ class MainWindow(QMainWindow):
         self.x = self.x[1:]  
         self.x = np.append(self.x, self.x[-1] + dt)
         
-        self.y = self.y[1:]  
+        # self.y = self.y[1:]  
         data = self.sim.do_simulation_step()
-        new_y_pt = data[-1]['probe_pos']
-        self.y = np.append(self.y, new_y_pt)
+        # new_y_pt = data[-1]['probe_pos']
+        # self.y = np.append(self.y, new_y_pt)
 
         # self.y2 = self.y2[1:]
         # new_y2_pt = data[-1]['vels']
@@ -97,7 +97,7 @@ class MainWindow(QMainWindow):
         new_Fz = data[-1]['probe_z']
         self.Fzs = np.append(self.Fzs, new_Fz)
         
-        self.pos_data_line.setData(self.x, self.y)
+        # self.pos_data_line.setData(self.x, self.y)
         # self.vel_data_line.setData(self.x, self.y2)
         self.Fx_line.setData(self.x, self.Fxs)
         # self.Fy_line.setData(self.x, self.Fys)
@@ -129,6 +129,7 @@ class MultiPendulumSim():
         # Set up global joint stiffness and damping parameters
         self.kpSlider = p.addUserDebugParameter("KpBranch", 0, 7.5, 1.5)
         self.kdSlider = p.addUserDebugParameter("KdBranch", 0, .5, .15)
+        self.probe_text = p.addUserDebugText("probePos=0",[-0.1,-0.5,1.25])
 
         p.enableJointForceTorqueSensor(bodyUniqueId=self.probe, jointIndex=2,enableSensor=True)
         self.setup_df()
@@ -183,6 +184,10 @@ class MultiPendulumSim():
         [_, _, reactf,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=2)
         self.data.append({'probe_pos':pos,'probe_x':reactf[0],'probe_z':reactf[2]})
 
+        txt = "probePos=" + str(pos)
+        prevTextId = self.probe_text
+        self.probe_text = p.addUserDebugText(txt, [-0.1,-0.5,1.25])
+        p.removeUserDebugItem(prevTextId)
         # p.applyExternalForce(objectUniqueId=self.pend, 
         #                      linkIndex=2,
         #                      forceObj=[0.2,0,0],
