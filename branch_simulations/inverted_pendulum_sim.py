@@ -1,3 +1,4 @@
+from re import S
 from turtle import pendown
 import pybullet as p
 import time
@@ -11,59 +12,46 @@ from PyQt5.QtCore import QTimer, QThread
 import pyqtgraph as pg
 
 class MainWindow(QMainWindow):
-    def __init__(self, sim, *args, **kwargs):
+    def __init__(self, sim, plotting_list, *args, **kwargs):
         '''initializes a plot at all zeros'''
         super(MainWindow, self).__init__(*args, **kwargs)
         self.sim = sim
         self.win = pg.GraphicsLayoutWidget(show=True, title="Simulation Readouts")
+        self.plot_list_strings = plotting_list
+        self.num_plots =len(plotting_list)
 
         # Universal setup for all plots
         pg.setConfigOptions(antialias=True)
         pen = pg.mkPen(color=(0, 0, 255))
         self.win.setBackground('w')
         self.win.resize(1000,600)
+
+        self.y_vals = {}
+        self.lines = {}
+        self.plots = {}
       
         x_timespan_secs = 2
         self.x = np.linspace(-1*x_timespan_secs+dt, 0, int(x_timespan_secs/dt))
-        self.y = np.zeros(len(self.x))
-        self.y2 = np.zeros(len(self.x))
-        self.Fxs = np.zeros(len(self.x))
-        self.Fys = np.zeros(len(self.x))
-        self.Fzs = np.zeros(len(self.x))
-
-        # Position plot
-        # self.p_pos_plot = self.win.addPlot(title="Probe Position")
-        # self.pos_data_line = self.p_pos_plot.plot(x=self.x, y=self.y, pen=pen)
-        # self.p_pos_plot.setYRange(-0.5, 0.5, padding=0)
-        # self.p_pos_plot.setLabel('bottom', "Time (s)", unit='s')
-        # self.p_pos_plot.setLabel('left', "Position (rad)", unit='rad')
-
-        # # Velocity plot
-        # self.p_vel_plot = self.win.addPlot(title="Pend Velocity")
-        # self.vel_data_line = self.p_vel_plot.plot(x=self.x, y=self.y2, pen=pen)
-        # # self.p_vel_plot.setYRange(-1, 1, padding=0)
-        # self.p_vel_plot.setLabel('bottom', "Time (s)", unit='s')
-        # self.p_vel_plot.setLabel('left', "Velocity (rad/s)", unit='rad/s')
-
-        # self.win.nextRow()
-        self.Fx_plot = self.win.addPlot(title="Reaction Force X")
-        self.Fx_line = self.Fx_plot.plot(x=self.x, y=self.Fxs, pen=pen)
-        # self.Fx_plot.setYRange(-1, 1, padding=0)
-        self.Fx_plot.setLabel('bottom', "Time (s)", unit='s')
-        self.Fx_plot.setLabel('left', "Fx (N)", unit='N')
-
-        # self.Fy_plot = self.win.addPlot(title="Reaction Force Y")
-        # self.Fy_line = self.Fy_plot.plot(x=self.x, y=self.Fys, pen=pen)
-        # # self.Fy_plot.setYRange(-1, 1, padding=0)
-        # self.Fy_plot.setLabel('bottom', "Time (s)", unit='s')
-        # self.Fy_plot.setLabel('left', "Fy (N)", unit='N')
-
-        self.Fz_plot = self.win.addPlot(title="Reaction Force Z")
-        self.Fz_line = self.Fz_plot.plot(x=self.x, y=self.Fzs, pen=pen)
-        # self.Fz_plot.setYRange(-.1, .1, padding=0)
-        self.Fz_plot.setLabel('bottom', "Time (s)", unit='s')
-        self.Fz_plot.setLabel('left', "Fz (N)", unit='N')
-
+        
+        # Set up one plot for each of the values listed in the initialization
+        for var_name in self.plot_list_strings:
+            y = np.zeros(len(self.x))
+            plot = self.win.addPlot(title=var_name)
+            line = plot.plot(x=self.x, y=y, pen=pen)
+            plot.setLabel('bottom', "Time (s)", unit='s')
+            if var_name == "probe_pos":
+                plot.setLabel('left', "Probe Position (m)", unit='m')
+            elif "pos" in var_name:
+                plot.setLabel('left', "Joint Position (rad)", unit='rad')
+            elif "vel" in var_name:
+                plot.setLabel('left', "Joint Velocity (rad/s)", unit='rad/s')
+            elif "M" in var_name:
+                plot.setLabel('left', "Reaction Moment (Nm)", unit='Nm')
+            else:
+                plot.setLabel('left', "Force (N)", unit='N')
+            self.y_vals[var_name] = y 
+            self.lines[var_name] = line
+            self.plots[var_name] = plot
         
         # Perform the loop and call the simulation         
         self.timer = QTimer()
@@ -76,32 +64,16 @@ class MainWindow(QMainWindow):
         self.x = self.x[1:]  
         self.x = np.append(self.x, self.x[-1] + dt)
         
-        # self.y = self.y[1:]  
+        # Run one simulation step
         data = self.sim.do_simulation_step()
-        # new_y_pt = data[-1]['probe_pos']
-        # self.y = np.append(self.y, new_y_pt)
 
-        # self.y2 = self.y2[1:]
-        # new_y2_pt = data[-1]['vels']
-        # self.y2 = np.append(self.y2, new_y2_pt)
+        # go through each of the plots and update it with the new value
+        for var_name in self.plot_list_strings:
+            self.y_vals[var_name] = self.y_vals[var_name][1:]
+            new_pt = list(data[var_name])[-1]
+            self.y_vals[var_name] = np.append(self.y_vals[var_name], new_pt)
+            self.lines[var_name].setData(self.x, self.y_vals[var_name])
 
-        self.Fxs = self.Fxs[1:]
-        new_Fx = list(data['probe_ft_x'])[-1]
-        self.Fxs = np.append(self.Fxs, new_Fx)
-
-        # self.Fys = self.Fys[1:]
-        # new_Fy = data[-1]['probe_y']
-        # self.Fys = np.append(self.Fys, new_Fy)
-
-        self.Fzs = self.Fzs[1:]
-        new_Fz = list(data['probe_ft_z'])[-1]
-        self.Fzs = np.append(self.Fzs, new_Fz)
-        
-        # self.pos_data_line.setData(self.x, self.y)
-        # self.vel_data_line.setData(self.x, self.y2)
-        self.Fx_line.setData(self.x, self.Fxs)
-        # self.Fy_line.setData(self.x, self.Fys)
-        self.Fz_line.setData(self.x, self.Fzs)
 
 class MultiPendulumSim():
     def __init__(self, urdf_path):
@@ -138,9 +110,8 @@ class MultiPendulumSim():
     def setup_df(self):
         self.col_names_ea_joint = ['pos', 'vel', 'Fx', 'Fz', 'My']
         self.cols = ['probe_pos', 'probe_ft_x', 'probe_ft_z']
-        self.data = []
-        self.data.append({'probe_pos':0,'probe_ft_x':0, 'probe_ft_z':0})
         for i in self.ctrl_jt_idxs:
+            p.enableJointForceTorqueSensor(bodyUniqueId=self.pend, jointIndex=i,enableSensor=True)
             cols_to_add = [x + "_" + str(i) for x in self.col_names_ea_joint]
             self.cols.extend(cols_to_add)
         # first_vec = self.get_current_state()
@@ -262,7 +233,8 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     sim = MultiPendulumSim("urdf/double_pendulum.urdf")
-    window = MainWindow(sim)
+    plot_list = ['probe_ft_x', 'probe_ft_z', 'My_2']
+    window = MainWindow(sim, plot_list)
     # # window.show()
   
     sys.exit(app.exec_())
