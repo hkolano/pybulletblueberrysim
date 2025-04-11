@@ -148,18 +148,158 @@
 	</link>
 
 	<!-- - - - - - - -->
-	<!-- Fixed Joint -->
+	<!-- Fixed Joint - Crossbar Hilt -->
 	<!-- - - - - - - -->
 
-	<joint name="joint_sensor"
+	<joint name="joint_crossbar_hilt"
 		   type="fixed">
 		<parent link="probe_link" />
-		<child link="sensor_link" />
-		<origin xyz="0.1 0 0"
+		<child link="crossbar_link" />
+		<origin xyz="0.0975 0 0"
 				rpy="0 0 0" />
 		<axis xyz="0 0 1" />
 		<limit effort="0"
 			   velocity="0"/>
 		<dynamics damping="0" friction="0"/>
 	</joint>
+
+	<!-- - - - - - - -->
+	<!-- Crossbar Hilt -->
+	<!-- - - - - - - -->
+
+	<link name="crossbar_link">
+		<inertial>
+			<mass value="0.005" />
+			<inertia ixx="0.001"
+					 ixy="0.0"
+					 ixz="0.0"
+					 iyy="0.001"
+					 iyz="0.0"
+					 izz="0.001" />
+			<origin xyz=".0 0 0" />
+		</inertial>
+		<visual>
+			<origin xyz=".0 0 0"
+					rpy="1.570795 0 0" />
+			<geometry>
+				<cylinder length="0.035"
+						  radius="0.005" />
+			</geometry>
+			<material name="red">
+				<color rgba="1 0 0 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0.0 0 0"
+					rpy="1.570795 0 0" />
+			<geometry>
+				<cylinder length="0.035"
+						  radius="0.005" />
+			</geometry>
+		</collision>
+	</link>
+
+	<!-- - - - - - - -->
+	<!-- Fixed Joint - Left Fork -->
+	<!-- - - - - - - -->
+
+	<joint name="left_fork_joint"
+		   type="fixed">
+		<parent link="crossbar_link" />
+		<child link="left_fork" />
+		<origin xyz="0.025 0.0175 0"
+				rpy="0 0 0" />
+		<axis xyz="0 0 1" />
+		<limit effort="0"
+			   velocity="0"/>
+		<dynamics damping="0" friction="0"/>
+	</joint>
+
+	<!-- - - - - - - -->
+	<!-- Left Fork Link -->
+	<!-- - - - - - - -->
+
+	<link name="left_fork">
+		<inertial>
+			<mass value="0.005" />
+			<inertia ixx="0.001"
+					 ixy="0.0"
+					 ixz="0.0"
+					 iyy="0.001"
+					 iyz="0.0"
+					 izz="0.001" />
+			<origin xyz=".0 0 0" />
+		</inertial>
+		<visual>
+			<origin xyz=".0 0 0"
+					rpy="0 1.57079 .174" />
+			<geometry>
+				<cylinder length="0.05"
+						  radius="0.005" />
+			</geometry>
+			<material name="red">
+				<color rgba="1 0 0 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0.0 0 0"
+					rpy="0 1.570795 0.174" />
+			<geometry>
+				<cylinder length="0.05"
+						  radius="0.005" />
+			</geometry>
+		</collision>
+	</link>
+
+	<!-- - - - - - - -->
+	<!-- Fixed Joint - Right Fork -->
+	<!-- - - - - - - -->
+
+	<joint name="right_fork_joint"
+		   type="fixed">
+		<parent link="crossbar_link" />
+		<child link="right_fork" />
+		<origin xyz="0.025 -0.0175 0"
+				rpy="0 0 0" />
+		<axis xyz="0 0 1" />
+		<limit effort="0"
+			   velocity="0"/>
+		<dynamics damping="0" friction="0"/>
+	</joint>
+
+	<!-- - - - - - - -->
+	<!-- Right Fork Link -->
+	<!-- - - - - - - -->
+
+	<link name="right_fork">
+		<inertial>
+			<mass value="0.005" />
+			<inertia ixx="0.001"
+					 ixy="0.0"
+					 ixz="0.0"
+					 iyy="0.001"
+					 iyz="0.0"
+					 izz="0.001" />
+			<origin xyz=".0 0 0" />
+		</inertial>
+		<visual>
+			<origin xyz=".0 0 0"
+					rpy="0 1.570795 -.174" />
+			<geometry>
+				<cylinder length="0.05"
+						  radius="0.005" />
+			</geometry>
+			<material name="red">
+				<color rgba="1 0 0 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0.0 0 0"
+					rpy="0 1.570795 -.174" />
+			<geometry>
+				<cylinder length="0.05"
+						  radius="0.005" />
+			</geometry>
+		</collision>
+	</link>
 </robot>
