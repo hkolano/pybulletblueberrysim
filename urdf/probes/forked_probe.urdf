@@ -126,7 +126,7 @@
 					 iyy="0.01"
 					 iyz="0.0"
 					 izz="0.01" />
-			<origin xyz=".05 0 0" />
+			<origin xyz=".0 0 0" />
 		</inertial>
 		<visual>
 			<origin xyz=".0 0 0"
@@ -146,4 +146,20 @@
 			</geometry>
 		</collision>
 	</link>
+
+	<!-- - - - - - - -->
+	<!-- Fixed Joint -->
+	<!-- - - - - - - -->
+
+	<joint name="joint_sensor"
+		   type="fixed">
+		<parent link="probe_link" />
+		<child link="sensor_link" />
+		<origin xyz="0.1 0 0"
+				rpy="0 0 0" />
+		<axis xyz="0 0 1" />
+		<limit effort="0"
+			   velocity="0"/>
+		<dynamics damping="0" friction="0"/>
+	</joint>
 </robot>

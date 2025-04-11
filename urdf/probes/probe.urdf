@@ -126,7 +126,7 @@
 					 iyy="0.01"
 					 iyz="0.0"
 					 izz="0.01" />
-			<origin xyz=".05 0 0" />
+			<origin xyz=".00 0 0" />
 		</inertial>
 		<visual>
 			<origin xyz=".0 0 0"
