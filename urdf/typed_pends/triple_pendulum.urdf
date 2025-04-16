@@ -74,24 +74,24 @@
 					 iyy="0.01051" 
 					 iyz="0.0" 
 					 izz="9.338e-07" />
-			<origin xyz="0 0 .395" />
+			<origin xyz="0 0 .2" />
 		</inertial>
 		<visual>
-			<origin xyz="0 0 .395" 
+			<origin xyz="0 0 .2" 
 					rpy="0 0 0" />
 			<geometry>
-				<cylinder length="0.79" 
+				<cylinder length="0.4" 
 						  radius="0.00608" />
 			</geometry>
-			<material name="green">
-				<color rgba="0 1 0 1" />
+			<material name="yellow">
+				<color rgba="1 1 0 1" />
 			</material>
 		</visual>
 		<collision>
-			<origin xyz="0 0 .395" 
+			<origin xyz="0 0 .2" 
 					rpy="0 0 0" />
 			<geometry>
-				<cylinder length="0.79" 
+				<cylinder length="0.4" 
 						  radius="0.00608" />
 			</geometry>
 		</collision>
@@ -105,7 +105,7 @@
 		   type="revolute">
 		<parent link="branch_link_a" />
 		<child link="branch_link_b" />
-		<origin xyz="0 0 0.79"
+		<origin xyz="0 0 0.4"
 				rpy="0 0 0" />
 		<axis xyz="0 1 0" />
 		<limit effort="0"
@@ -126,13 +126,13 @@
 					 iyy="0.01051"
 					 iyz="0.0"
 					 izz="9.338e-07" />
-			<origin xyz="0 0 .395" />
+			<origin xyz="0 0 .2" />
 		</inertial>
 		<visual>
-			<origin xyz="0 0 .395"
+			<origin xyz="0 0 .2"
 					rpy="0 0 0" />
 			<geometry>
-				<cylinder length="0.79"
+				<cylinder length="0.4"
 						  radius="0.00608" />
 			</geometry>
 			<material name="green">
@@ -140,10 +140,10 @@
 			</material>
 		</visual>
 		<collision>
-			<origin xyz="0 0 .395"
+			<origin xyz="0 0 .2"
 					rpy="0 0 0" />
 			<geometry>
-				<cylinder length="0.79"
+				<cylinder length="0.4"
 						  radius="0.00608" />
 			</geometry>
 		</collision>
@@ -157,7 +157,7 @@
 		   type="revolute">
 		<parent link="branch_link_b" />
 		<child link="branch_link_c" />
-		<origin xyz="0 0 0.79"
+		<origin xyz="0 0 0.4"
 				rpy="0 0 0" />
 		<axis xyz="0 1 0" />
 		<limit effort="0"
@@ -166,7 +166,7 @@
 	</joint>
 
 	<!-- - - - - - - -->
-	<!-- Second branch -->
+	<!-- Third branch -->
 	<!-- - - - - - - -->
 
 	<link name="branch_link_c">
@@ -178,24 +178,24 @@
 					 iyy="0.01051"
 					 iyz="0.0"
 					 izz="9.338e-07" />
-			<origin xyz="0 0 .395" />
+			<origin xyz="0 0 .2" />
 		</inertial>
 		<visual>
-			<origin xyz="0 0 .395"
+			<origin xyz="0 0 .2"
 					rpy="0 0 0" />
 			<geometry>
-				<cylinder length="0.79"
+				<cylinder length="0.4"
 						  radius="0.00608" />
 			</geometry>
-			<material name="green">
-				<color rgba="0 1 0 1" />
+			<material name="teal">
+				<color rgba="0 1 1 1" />
 			</material>
 		</visual>
 		<collision>
-			<origin xyz="0 0 .395"
+			<origin xyz="0 0 .2"
 					rpy="0 0 0" />
 			<geometry>
-				<cylinder length="0.79"
+				<cylinder length="0.4"
 						  radius="0.00608" />
 			</geometry>
 		</collision>

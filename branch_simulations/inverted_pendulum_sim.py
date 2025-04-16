@@ -248,8 +248,8 @@ if __name__ == '__main__':
     f_stop_thresh = 9.8067 # N of force (1000gf)
 
     app = QApplication(sys.argv)
-    sim = MultiPendulumSim("urdf/typed_pends/double_pendulum.urdf")
-    plot_list = ['probe_ft_x', 'probe_ft_z', 'pos_1', 'pos_2']
+    sim = MultiPendulumSim("urdf/typed_pends/triple_pendulum.urdf")
+    plot_list = ['probe_ft_z', 'pos_1', 'pos_2']
     window = MainWindow(sim, plot_list)
     # # window.show()
   
