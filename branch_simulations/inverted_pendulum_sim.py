@@ -39,6 +39,7 @@ class MainWindow(QMainWindow):
             plot = self.win.addPlot(title=var_name)
             line = plot.plot(x=self.x, y=y, pen=pen)
             plot.setLabel('bottom', "Time (s)", unit='s')
+            plot.setYRange(0, 0.75, padding=0)
             if var_name == "probe_pos":
                 plot.setLabel('left', "Probe Position (m)", unit='m')
             elif "pos" in var_name:
@@ -53,7 +54,7 @@ class MainWindow(QMainWindow):
             self.lines[var_name] = line
             self.plots[var_name] = plot
         
-        # Perform the loop and call the simulation         
+        # Perform the loop and call the simulation 
         self.timer = QTimer()
         self.timer.setInterval(int(1/dt))
         self.timer.timeout.connect(self.update_plot_data)
@@ -74,6 +75,11 @@ class MainWindow(QMainWindow):
             self.y_vals[var_name] = np.append(self.y_vals[var_name], new_pt)
             self.lines[var_name].setData(self.x, self.y_vals[var_name])
 
+        if self.x[-1] >= 45.:
+            self.timer.stop()
+        elif list(data['probe_ft_z'])[-1] > f_stop_thresh:
+            self.timer.stop()
+
 
 class MultiPendulumSim():
     def __init__(self, urdf_path):
@@ -89,7 +95,7 @@ class MultiPendulumSim():
 
         # Load in pendulum
         self.pend = p.loadURDF(urdf_path, [0, 0, 0], useFixedBase=True)
-        self.probe = p.loadURDF("urdf/probe.urdf", [0, -0.5, 1.2], useFixedBase=True)
+        self.probe = p.loadURDF("urdf/probes/forked_probe.urdf", [0, -0.5, 1.2], useFixedBase=True)
         self.n_joints = p.getNumJoints(self.pend)
         self.ctrl_jt_idxs = list(range(self.n_joints))[1:] # the list of joints idxs we can actually control (not fixed joints)
         # will have to change the above if adding any artificial fixed joints 
@@ -125,6 +131,10 @@ class MultiPendulumSim():
                                     targetPositions=pos_list, 
                                     targetVelocities=[0]*(self.n_joints-1),
                                     controlMode=p.POSITION_CONTROL)
+        p.setJointMotorControl2(bodyUniqueId=self.probe,
+                                jointIndex=1,
+                                controlMode=p.POSITION_CONTROL,
+                                targetPosition=0)
         for _ in range(1000):
             p.stepSimulation()
         
@@ -134,6 +144,11 @@ class MultiPendulumSim():
                                     targetVelocities=[0]*(self.n_joints-1),
                                     controlMode=p.VELOCITY_CONTROL,
                                     forces=[0]*(self.n_joints-1))
+        p.setJointMotorControl2(bodyUniqueId=self.probe,
+                                jointIndex=1,
+                                controlMode=p.VELOCITY_CONTROL,
+                                targetVelocity=0,
+                                force=0)
 
     def run_simulation(self):
         while p.isConnected():
@@ -155,7 +170,7 @@ class MultiPendulumSim():
         p.setJointMotorControl2(bodyUniqueId=self.probe,
                                     jointIndex=1,
                                     controlMode=p.VELOCITY_CONTROL,
-                                    targetVelocity=0.25)
+                                    targetVelocity=0.01)
 
         self.add_current_state_to_df()
         [pos, _, _,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=1)
@@ -230,10 +245,11 @@ if __name__ == '__main__':
 
     # Environmental parameters
     dt = .05 # pybullet simulation step
+    f_stop_thresh = 9.8067 # N of force (1000gf)
 
     app = QApplication(sys.argv)
-    sim = MultiPendulumSim("urdf/double_pendulum.urdf")
-    plot_list = ['probe_ft_x', 'probe_ft_z', 'My_2']
+    sim = MultiPendulumSim("urdf/typed_pends/double_pendulum.urdf")
+    plot_list = ['probe_ft_x', 'probe_ft_z', 'pos_1', 'pos_2']
     window = MainWindow(sim, plot_list)
     # # window.show()
   
