@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
         self.timer.setInterval(int(1/dt))
         self.timer.timeout.connect(self.update_plot_data)
         self.timer.start()
-        
+       
     def update_plot_data(self):
         # Update the time 
         self.x = self.x[1:]  
@@ -75,10 +75,14 @@ class MainWindow(QMainWindow):
             self.y_vals[var_name] = np.append(self.y_vals[var_name], new_pt)
             self.lines[var_name].setData(self.x, self.y_vals[var_name])
 
-        if self.x[-1] >= 45.:
+        if self.x[-1] >= 10.:
             self.timer.stop()
+            self.win.close()
+            plot_probe_info(self.sim.df)
+            self.sim.plot_all_angles()
         elif list(data['probe_ft_z'])[-1] > f_stop_thresh:
             self.timer.stop()
+
 
 
 class MultiPendulumSim():
@@ -110,12 +114,13 @@ class MultiPendulumSim():
         self.probe_text = p.addUserDebugText("probePos=0",[-0.1,-0.5,1.25])
 
         p.enableJointForceTorqueSensor(bodyUniqueId=self.probe, jointIndex=2,enableSensor=True)
+        self.step_ctr = 0
         self.setup_df()
         # self.run_simulation()
 
     def setup_df(self):
         self.col_names_ea_joint = ['pos', 'vel', 'Fx', 'Fz', 'My']
-        self.cols = ['probe_pos', 'probe_ft_x', 'probe_ft_z']
+        self.cols = ['times', 'probe_pos', 'probe_ft_x', 'probe_ft_z']
         for i in self.ctrl_jt_idxs:
             p.enableJointForceTorqueSensor(bodyUniqueId=self.pend, jointIndex=i,enableSensor=True)
             cols_to_add = [x + "_" + str(i) for x in self.col_names_ea_joint]
@@ -185,10 +190,12 @@ class MultiPendulumSim():
         #                      posObj=[0,-0.5,1.2],
         #                      flags=p.WORLD_FRAME)
         p.stepSimulation()
+        self.step_ctr += 1
         return self.df
 
     def get_current_state(self):
-        data_vec = []
+        time=self.step_ctr*dt
+        data_vec = [time]
         [pos, _, _,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=1)
         data_vec.append(pos)
         [_, _, probeft,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=2)
@@ -201,8 +208,33 @@ class MultiPendulumSim():
 
     def add_current_state_to_df(self):
         self.df.loc[len(self.df)] = self.get_current_state()
-                                
 
+    def plot_all_angles(self):
+        n_plots = len(self.ctrl_jt_idxs)
+        fig,axs = plt.subplots(n_plots, 1, sharey=True)
+        ax_ctr = n_plots-1 # start plotting at the bottom
+        for ax in axs:
+            ax.grid(True)
+        for i in self.ctrl_jt_idxs:
+            pose_name = "pos" + "_" + str(i)
+            line = axs[ax_ctr].plot(self.df['times'], self.df[pose_name])
+            axs[ax_ctr].set_ylabel('Position of Joint' + str(i) + '(rad)')
+            ax_ctr = ax_ctr - 1
+        axs[ax_ctr].set_xlabel('Time (s)')
+        fig.suptitle('Pendulum Joint Positions')
+        plt.show()
+
+    def plot_all_react_forces(self):
+        n_rows = len(self.ctrl_jt_idxs)
+        fig, axs = plt.subplots(n_rows, 3)
+        ax_ctr = n_rows-1
+        force_names = ['Fx', 'Fz', 'My']
+        for i in self.ctrl_jt_idxs: # iterate over rows/joints
+            for j in range(3):  # iterate through reaction forces
+                pass
+
+
+                                
 def plot_reaction_forces(df):
     """ Plots a 3 x 2 grid of the reaction forces for this run """
     fig, axs = plt.subplots(3,2)
@@ -228,17 +260,16 @@ def plot_reaction_forces(df):
     
     plt.show()
 
-def plot_first_joint_pos_and_vel(df):
-    """ plots position and velocity of the first joint for this run """
-    fig, axs = plt.subplots(2,1)
+def plot_probe_info(df):
+    fig, axs = plt.subplots(2, 1)
     for ax in axs:
         ax.grid(True)
-    pose_line = axs[0].plot(df['times'], df['poses'])
-    axs[0].set_ylabel('Position (rad)')
-    vel_line = axs[1].plot(df['times'], df['vels'])
-    axs[1].set_ylabel('Velocity (rad/s)')
+    disp_line = axs[0].plot(df['times'], df['probe_pos'])
+    axs[0].set_ylabel('Position (m)')
+    force_line = axs[1].plot(df['times'], df['probe_ft_z'])
+    axs[1].set_ylabel('Probe Force (N)')
     axs[1].set_xlabel('Time (s)')
-    fig.suptitle('Pendulum Position and Velocity')
+    fig.suptitle('Probe Position and Force')
     plt.show()
 
 if __name__ == '__main__':
@@ -252,5 +283,5 @@ if __name__ == '__main__':
     plot_list = ['probe_ft_z', 'pos_1', 'pos_2']
     window = MainWindow(sim, plot_list)
     # # window.show()
-  
+    print("I'm at the end of the code now")
     sys.exit(app.exec_())
