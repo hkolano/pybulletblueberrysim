@@ -39,7 +39,7 @@ class MainWindow(QMainWindow):
             plot = self.win.addPlot(title=var_name)
             line = plot.plot(x=self.x, y=y, pen=pen)
             plot.setLabel('bottom', "Time (s)", unit='s')
-            plot.setYRange(0, 0.75, padding=0)
+            # plot.setYRange(0, 0.75, padding=0)
             if var_name == "probe_pos":
                 plot.setLabel('left', "Probe Position (m)", unit='m')
             elif "pos" in var_name:
@@ -80,7 +80,7 @@ class MainWindow(QMainWindow):
             self.win.close()
             plot_probe_info(self.sim.df)
             self.sim.plot_all_angles()
-        elif list(data['probe_ft_z'])[-1] > f_stop_thresh:
+        elif list(data['probe_norm'])[-1] > f_stop_thresh:
             self.timer.stop()
 
 
@@ -120,7 +120,7 @@ class MultiPendulumSim():
 
     def setup_df(self):
         self.col_names_ea_joint = ['pos', 'vel', 'Fx', 'Fz', 'My']
-        self.cols = ['times', 'probe_pos', 'probe_ft_x', 'probe_ft_z']
+        self.cols = ['times', 'probe_pos', 'probe_norm']
         for i in self.ctrl_jt_idxs:
             p.enableJointForceTorqueSensor(bodyUniqueId=self.pend, jointIndex=i,enableSensor=True)
             cols_to_add = [x + "_" + str(i) for x in self.col_names_ea_joint]
@@ -198,8 +198,15 @@ class MultiPendulumSim():
         data_vec = [time]
         [pos, _, _,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=1)
         data_vec.append(pos)
-        [_, _, probeft,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=2)
-        data_vec.extend([probeft[0], probeft[2]])
+        q = p.getContactPoints(bodyA=self.probe, 
+                               linkIndexA=2)
+        if len(q) == 0:
+            probe_norm = 0
+        else:
+            probe_norm = q[0][8] # eighth value of the contact point info is normal force
+        # [_, _, probeft,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=2)
+        # data_vec.extend([probeft[0], probeft[2])
+        data_vec.append(probe_norm)
         for i in self.ctrl_jt_idxs:
             [pos, vel, Rf, _] = p.getJointState(bodyUniqueId=self.pend, jointIndex=i)
             resp = [pos, vel, Rf[0], Rf[2], Rf[4]]
@@ -266,7 +273,7 @@ def plot_probe_info(df):
         ax.grid(True)
     disp_line = axs[0].plot(df['times'], df['probe_pos'])
     axs[0].set_ylabel('Position (m)')
-    force_line = axs[1].plot(df['times'], df['probe_ft_z'])
+    force_line = axs[1].plot(df['times'], df['probe_norm'])
     axs[1].set_ylabel('Probe Force (N)')
     axs[1].set_xlabel('Time (s)')
     fig.suptitle('Probe Position and Force')
@@ -280,7 +287,7 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     sim = MultiPendulumSim("urdf/typed_pends/triple_pendulum.urdf")
-    plot_list = ['probe_ft_z', 'pos_1', 'pos_2']
+    plot_list = ['probe_norm', 'pos_1', 'pos_2']
     window = MainWindow(sim, plot_list)
     # # window.show()
     print("I'm at the end of the code now")
