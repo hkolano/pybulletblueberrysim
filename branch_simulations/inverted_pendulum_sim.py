@@ -11,6 +11,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtCore import QTimer, QThread
 import pyqtgraph as pg
 
+from CaneDynamics import CaneDynamics
+
 class MainWindow(QMainWindow):
     def __init__(self, sim, plotting_list, *args, **kwargs):
         '''initializes a plot at all zeros'''
@@ -75,7 +77,7 @@ class MainWindow(QMainWindow):
             self.y_vals[var_name] = np.append(self.y_vals[var_name], new_pt)
             self.lines[var_name].setData(self.x, self.y_vals[var_name])
 
-        if self.x[-1] >= 10.:
+        if self.x[-1] >= sim_length:
             self.timer.stop()
             self.win.close()
             plot_probe_info(self.sim.df)
@@ -109,8 +111,11 @@ class MultiPendulumSim():
         self.move_to_position(boring_start_pos)
 
         # Set up global joint stiffness and damping parameters
-        self.kpSlider = p.addUserDebugParameter("KpBranch", 0, 7.5, 1.5)
-        self.kdSlider = p.addUserDebugParameter("KdBranch", 0, .5, .15)
+        # self.kpSlider = p.addUserDebugParameter("KpBranch", 0, 7.5, 1.5)
+        # self.kdSlider = p.addUserDebugParameter("KdBranch", 0, .5, .15)
+        self.dyn = CaneDynamics(len(self.ctrl_jt_idxs))
+        # self.dyn.reset_values()
+        self.dyn.set_to_uniform_values(20, .1)
         self.probe_text = p.addUserDebugText("probePos=0",[-0.1,-0.5,1.25])
 
         p.enableJointForceTorqueSensor(bodyUniqueId=self.probe, jointIndex=2,enableSensor=True)
@@ -161,16 +166,16 @@ class MultiPendulumSim():
             time.sleep(dt)
 
     def do_simulation_step(self):
-        Kp = p.readUserDebugParameter(self.kpSlider)
-        Kd = p.readUserDebugParameter(self.kdSlider)
+        # Kp = p.readUserDebugParameter(self.kpSlider)
+        # Kd = p.readUserDebugParameter(self.kdSlider)
 
         p.setJointMotorControlArray(bodyUniqueId=self.pend,
                                 jointIndices=self.ctrl_jt_idxs,
                                 controlMode=p.PD_CONTROL,
                                 targetVelocities=[0]*len(self.ctrl_jt_idxs),
                                 targetPositions=[0]*len(self.ctrl_jt_idxs),
-                                positionGains=[Kp]*len(self.ctrl_jt_idxs),
-                                velocityGains=[Kd]*len(self.ctrl_jt_idxs))
+                                positionGains=self.dyn.Kps,
+                                velocityGains=self.dyn.Kds)
 
         p.setJointMotorControl2(bodyUniqueId=self.probe,
                                     jointIndex=1,
@@ -240,33 +245,7 @@ class MultiPendulumSim():
             for j in range(3):  # iterate through reaction forces
                 pass
 
-
-                                
-def plot_reaction_forces(df):
-    """ Plots a 3 x 2 grid of the reaction forces for this run """
-    fig, axs = plt.subplots(3,2)
-    
-    axs[0,0].set_ylabel('Force X (N)')
-    Fx_line = axs[0,0].plot(df['times'], df['RFx'])
-
-    axs[1,0].set_ylabel('Force Y (N)')
-    Fy_line = axs[1,0].plot(df['times'], df['RFy'])
-
-    axs[2,0].set_ylabel('Force Z (N)')
-    Fz_line = axs[2,0].plot(df['times'], df['RFz'])
-
-    axs[0,1].set_ylabel('Moment X (Nm)')
-    Mx_line = axs[0,1].plot(df['times'], df['RMx'])
-
-    axs[1,1].set_ylabel('Moment Y (N)')
-    
-    My_line = axs[1,1].plot(df['times'], df['RMy'])
-
-    axs[2,1].set_ylabel('Moment Z (N)')
-    Mz_line = axs[2,1].plot(df['times'], df['RMz'])
-    
-    plt.show()
-
+                               
 def plot_probe_info(df):
     fig, axs = plt.subplots(2, 1)
     for ax in axs:
@@ -284,11 +263,11 @@ if __name__ == '__main__':
     # Environmental parameters
     dt = .05 # pybullet simulation step
     f_stop_thresh = 9.8067 # N of force (1000gf)
+    sim_length = 10. # time simulation will run for, in seconds
 
     app = QApplication(sys.argv)
     sim = MultiPendulumSim("urdf/typed_pends/triple_pendulum.urdf")
     plot_list = ['probe_norm', 'pos_1', 'pos_2']
     window = MainWindow(sim, plot_list)
     # # window.show()
-    print("I'm at the end of the code now")
     sys.exit(app.exec_())
