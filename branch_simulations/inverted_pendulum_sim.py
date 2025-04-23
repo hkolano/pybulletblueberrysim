@@ -94,14 +94,14 @@ class MultiPendulumSim():
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(0,0,-10)
         planeId = p.loadURDF("plane.urdf")
-        p.resetDebugVisualizerCamera(cameraDistance=2,
-                             cameraYaw=17.5,
-                             cameraPitch=-35,
+        p.resetDebugVisualizerCamera(cameraDistance=1.46,
+                             cameraYaw=-180,
+                             cameraPitch=-94,
                              cameraTargetPosition=[0, -.5, 0])
 
         # Load in pendulum
         self.pend = p.loadURDF(urdf_path, [0, 0, 0], useFixedBase=True)
-        self.probe = p.loadURDF("urdf/probes/forked_probe.urdf", [0, -0.5, 1.2], useFixedBase=True)
+        self.probe = p.loadURDF("urdf/probes/forked_probe.urdf", [0.003, -0.5, 1.2], useFixedBase=True)
         self.n_joints = p.getNumJoints(self.pend)
         self.ctrl_jt_idxs = list(range(self.n_joints))[1:] # the list of joints idxs we can actually control (not fixed joints)
         # will have to change the above if adding any artificial fixed joints 
@@ -115,7 +115,9 @@ class MultiPendulumSim():
         # self.kdSlider = p.addUserDebugParameter("KdBranch", 0, .5, .15)
         self.dyn = CaneDynamics(len(self.ctrl_jt_idxs))
         # self.dyn.reset_values()
-        self.dyn.set_to_uniform_values(20, .1)
+        self.dyn.set_to_uniform_values(30, 0.1)
+        # self.dyn.set_linearly_decreasing(160, 20, 1, .1)
+        # self.dyn.set_linearly_increasing(5, 20, .01, .1)
         self.probe_text = p.addUserDebugText("probePos=0",[-0.1,-0.5,1.25])
 
         p.enableJointForceTorqueSensor(bodyUniqueId=self.probe, jointIndex=2,enableSensor=True)

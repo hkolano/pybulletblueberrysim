@@ -1,4 +1,4 @@
-# import numpy as np
+import numpy as np
 
 class CaneDynamics:
     def __init__(self, njoints):
