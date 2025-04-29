@@ -1,0 +1,361 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="single_pendulum">
+
+	<link name="world"/>
+	<joint name="world_to_base"
+		   type="fixed">
+		<parent link="world" />
+		<child link="base_link" />
+		<origin xyz="0 -.5 .025"
+				rpy="0 0 0" />
+		<axis xyz="0 0 0" />
+	</joint>
+
+
+	<!-- - - - - - -->
+	<!-- Pendulum Base cube -->
+	<!-- - - - - - -->
+
+	<link name="base_link">
+		<inertial>
+			<mass value="0" />
+			<inertia ixx="0.0"
+					 ixy="0.0"
+					 ixz="0.0"
+					 iyy="0.0"
+					 iyz="0.0"
+					 izz="0.0" />
+		</inertial>
+		<visual>
+			<origin xyz="0 0 0"
+					rpy="0 0 0" />
+			<geometry>
+				<box size=".05 .05 .05"/>
+			</geometry>
+			<material name="blue">
+				<color rgba="0 0 1 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0"
+					rpy="0 0 0" />
+			<geometry>
+				<box size=".05 .05 .05" />
+			</geometry>
+		</collision>
+	</link>
+
+	<!-- - - - - - - -->
+	<!-- Revolute Joint -->
+	<!-- - - - - - - -->
+
+	<joint name="base_branch_joint"
+		   type="revolute">
+		<parent link="base_link" />
+		<child link="branch_link_a" />
+		<origin xyz="0 0 0"
+				rpy="0 0 0" />
+		<axis xyz="0 1 0" />
+		<limit effort="0"
+			   velocity="0"/>
+		<dynamics damping="0" friction="0"/>
+	</joint>
+
+	<!-- - - - - - - -->
+	<!-- First actual branch -->
+	<!-- - - - - - - -->
+
+	<link name="branch_link_a">
+		<inertial>
+			<mass value="0.05052" />
+			<inertia ixx="0.01051"
+					 ixy="0.0"
+					 ixz="0.0"
+					 iyy="0.01051"
+					 iyz="0.0"
+					 izz="9.338e-07" />
+			<origin xyz="0 0 .2" />
+		</inertial>
+		<visual>
+			<origin xyz="0 0 .2"
+					rpy="0 0 0" />
+			<geometry>
+				<cylinder length="0.4"
+						  radius="0.00608" />
+			</geometry>
+			<material name="yellow">
+				<color rgba="1 1 0 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 .2"
+					rpy="0 0 0" />
+			<geometry>
+				<cylinder length="0.4"
+						  radius="0.00608" />
+			</geometry>
+		</collision>
+	</link>
+
+	<!-- - - - - - - -->
+	<!-- Revolute Joint -->
+	<!-- - - - - - - -->
+
+	<joint name="branch_joint_ab"
+		   type="revolute">
+		<parent link="branch_link_a" />
+		<child link="branch_link_b" />
+		<origin xyz="0 0 0.4"
+				rpy="0 0 0" />
+		<axis xyz="0 1 0" />
+		<limit effort="0"
+			   velocity="0"/>
+		<dynamics damping="0" friction="0"/>
+	</joint>
+
+	<!-- - - - - - - -->
+	<!-- Second branch -->
+	<!-- - - - - - - -->
+
+	<link name="branch_link_b">
+		<inertial>
+			<mass value="0.05052" />
+			<inertia ixx="0.01051"
+					 ixy="0.0"
+					 ixz="0.0"
+					 iyy="0.01051"
+					 iyz="0.0"
+					 izz="9.338e-07" />
+			<origin xyz="0 0 .2" />
+		</inertial>
+		<visual>
+			<origin xyz="0 0 .2"
+					rpy="0 0 0" />
+			<geometry>
+				<cylinder length="0.4"
+						  radius="0.00608" />
+			</geometry>
+			<material name="green">
+				<color rgba="0 1 0 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 .2"
+					rpy="0 0 0" />
+			<geometry>
+				<cylinder length="0.4"
+						  radius="0.00608" />
+			</geometry>
+		</collision>
+	</link>
+
+	<!-- - - - - - - -->
+	<!-- Revolute Joint -->
+	<!-- - - - - - - -->
+
+	<joint name="branch_joint_bc"
+		   type="revolute">
+		<parent link="branch_link_b" />
+		<child link="branch_link_c" />
+		<origin xyz="0 0 0.4"
+				rpy="0 0 0" />
+		<axis xyz="0 1 0" />
+		<limit effort="0"
+			   velocity="0"/>
+		<dynamics damping="0" friction="0"/>
+	</joint>
+
+	<!-- - - - - - - -->
+	<!-- Third branch -->
+	<!-- - - - - - - -->
+
+	<link name="branch_link_c">
+		<inertial>
+			<mass value="0.05052" />
+			<inertia ixx="0.01051"
+					 ixy="0.0"
+					 ixz="0.0"
+					 iyy="0.01051"
+					 iyz="0.0"
+					 izz="9.338e-07" />
+			<origin xyz="0 0 .2" />
+		</inertial>
+		<visual>
+			<origin xyz="0 0 .2"
+					rpy="0 0 0" />
+			<geometry>
+				<cylinder length="0.4"
+						  radius="0.00608" />
+			</geometry>
+			<material name="teal">
+				<color rgba="0 1 1 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 .2"
+					rpy="0 0 0" />
+			<geometry>
+				<cylinder length="0.4"
+						  radius="0.00608" />
+			</geometry>
+		</collision>
+	</link>
+
+	<!-- - - - - - -->
+	<!-- sensor -->
+	<!-- - - - - - -->
+
+	<joint name="attachment_joint"
+			type="revolute">
+		<parent link="branch_link_c" />
+		<child link="sensor_link" />
+		<origin xyz="-0.016 0 .38"
+				rpy="0 0 0" />
+		<axis xyz="0 1 0" />
+		<limit effort="0"
+				velocity="0"/>
+		<dynamics damping="0" friction="0"/>
+	</joint>
+
+	<!-- - - - - - - -->
+	<!-- Sensor Link -->
+	<!-- - - - - - - -->
+
+	<link name="sensor_link">
+		<inertial>
+			<mass value="0.05" />
+			<inertia ixx="0.01"
+					 ixy="0.0"
+					 ixz="0.0"
+					 iyy="0.01"
+					 iyz="0.0"
+					 izz="0.01" />
+			<origin xyz=".00 0 0" />
+		</inertial>
+		<visual>
+			<origin xyz=".0 0 0"
+					rpy="0 0 0" />
+			<geometry>
+				<sphere radius="0.01" />
+			</geometry>
+			<material name="red">
+				<color rgba="1 0 0 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0"
+					rpy="0 0 0" />
+			<geometry>
+				<sphere radius="0.01" />
+			</geometry>
+		</collision>
+	</link>
+
+	<!-- - - - - - - -->
+	<!-- Fixed Joint -->
+	<!-- - - - - - - -->
+
+	<joint name="joint_sensor"
+		   type="fixed">
+		<parent link="sensor_link" />
+		<child link="probe_link" />
+		<origin xyz="-0.05 0 0"
+				rpy="0 0 0" />
+		<axis xyz="0 0 1" />
+		<limit effort="0"
+			   velocity="0"/>
+		<dynamics damping="0" friction="0"/>
+	</joint>
+
+	<!-- - - - - - - -->
+	<!-- Probe part -->
+	<!-- - - - - - - -->
+
+	<link name="probe_link">
+		<inertial>
+			<mass value="0.05" />
+			<inertia ixx="0.01"
+					 ixy="0.0"
+					 ixz="0.0"
+					 iyy="0.01"
+					 iyz="0.0"
+					 izz="0.01" />
+			<origin xyz="0 0 0" />
+		</inertial>
+		<visual>
+			<origin xyz="0 0 0"
+					rpy="0 1.570795 0" />
+			<geometry>
+				<cylinder length="0.1"
+						  radius="0.005" />
+			</geometry>
+			<material name="red">
+				<color rgba="1 0 0 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0"
+					rpy="0 1.570795 0" />
+			<geometry>
+				<cylinder length="0.1"
+						  radius="0.005" />
+			</geometry>
+		</collision>
+	</link>
+	
+	<!-- - - - - - - -->
+	<!-- Prismatic Joint -->
+	<!-- - - - - - - -->
+
+	<joint name="base_joint"
+			type="prismatic">
+		<parent link="probe_link" />
+		<child link="probe_base" />
+		<origin xyz="-0.075 0 0"
+				rpy="0 0 0" />
+		<axis xyz="1 0 0" />
+		<limit effort="0"
+				velocity="0"/>
+		<dynamics damping="0" friction="0"/>
+	</joint>
+	
+	
+	<!-- - - - - - --> 
+	<!-- Probe Base cube -->
+	<!-- - - - - - -->
+		
+	<link name="probe_base">
+		<inertial>
+			<mass value="0" />
+			<inertia ixx="0.0" 
+					 ixy="0.0" 
+					 ixz="0.0" 
+					 iyy="0.0" 
+					 iyz="0.0" 
+					 izz="0.0" />
+		</inertial>
+		<visual>
+			<origin xyz="0 0 0" 
+					rpy="0 0 0" />
+			<geometry>
+				<box size=".05 .05 .05"/>
+			</geometry>
+			<material name="red">
+				<color rgba="1 0 0 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 0" 
+					rpy="0 0 0" />
+			<geometry>
+				<box size=".05 .05 .05" />
+			</geometry>
+		</collision>
+	</link>
+
+
+
+
+
+
+</robot>

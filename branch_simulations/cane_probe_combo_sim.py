@@ -99,7 +99,9 @@ class MultiPendulumSim():
 
         # Load in pendulum
         self.pend = p.loadURDF(urdf_path, [0, 0, 0], useFixedBase=True)
-        self.probe = p.loadURDF("urdf/probes/forked_probe.urdf", [0.003, -0.5, 1.2], useFixedBase=True)
+        print(p.getLinkState(self.pend, 6))
+        p.createConstraint(self.pend, 6, -1, -1, p.JOINT_FIXED, [0, 0, 0], [-.141, -0.5, 1.205], [0,0,0])
+        self.probe = p.loadURDF("urdf/probes/probe.urdf", [0.003, 0, 1.2], useFixedBase=True)
         self.n_joints = p.getNumJoints(self.pend)
         self.ctrl_jt_idxs = list(range(self.n_joints))[1:] # the list of joints idxs we can actually control (not fixed joints)
         # will have to change the above if adding any artificial fixed joints 
@@ -126,7 +128,7 @@ class MultiPendulumSim():
     def setup_df(self):
         self.col_names_ea_joint = ['pos', 'vel', 'Fx', 'Fz', 'My']
         self.cols = ['times', 'probe_pos', 'probe_norm']
-        # to connect the two things together
+        # print(p.getLinkState(self.pend, 3))
         # p.createConstraint(parentBodyUniqueId=self.probe,
         #                   parentLinkIndex=2,
         #                   childBodyUniqueId=self.pend,
@@ -218,7 +220,8 @@ class MultiPendulumSim():
             probe_norm = 0
         else:
             probe_norm = q[0][8] # eighth value of the contact point info is normal force
-        # [_, _, probeft,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=2)
+            print(q[0][6])
+           # [_, _, probeft,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=2)
         # data_vec.extend([probeft[0], probeft[2])
         data_vec.append(probe_norm)
         for i in self.ctrl_jt_idxs:
@@ -270,12 +273,12 @@ def plot_probe_info(df):
 if __name__ == '__main__':
 
     # Environmental parameters
-    dt = .05 # pybullet simulation step
+    dt = .02 # pybullet simulation step
     f_stop_thresh = 9.8067 # N of force (1000gf)
     sim_length = 10. # time simulation will run for, in seconds
 
     app = QApplication(sys.argv)
-    sim = MultiPendulumSim("urdf/typed_pends/triple_pendulum.urdf")
+    sim = MultiPendulumSim("urdf/triple_pendulum_attached_probe.urdf")
     plot_list = ['probe_norm', 'pos_1', 'pos_2']
     window = MainWindow(sim, plot_list)
     # # window.show()
