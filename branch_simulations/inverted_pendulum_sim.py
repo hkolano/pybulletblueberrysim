@@ -189,7 +189,7 @@ class MultiPendulumSim():
         p.setJointMotorControl2(bodyUniqueId=self.probe,
                                     jointIndex=1,
                                     controlMode=p.VELOCITY_CONTROL,
-                                    targetVelocity=0.01)
+                                    targetVelocity=0.001)
 
         self.add_current_state_to_df()
         [pos, _, _,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=1)
@@ -217,7 +217,10 @@ class MultiPendulumSim():
         if len(q) == 0:
             probe_norm = 0
         else:
-            probe_norm = q[0][8] # eighth value of the contact point info is normal force
+            qs = []
+            for i in range(len(q)):
+                qs.append(q[i][9])
+            probe_norm = max(qs) # eighth value of the contact point info is normal force
         # [_, _, probeft,_] = p.getJointState(bodyUniqueId=self.probe, jointIndex=2)
         # data_vec.extend([probeft[0], probeft[2])
         data_vec.append(probe_norm)
@@ -270,7 +273,7 @@ def plot_probe_info(df):
 if __name__ == '__main__':
 
     # Environmental parameters
-    dt = .05 # pybullet simulation step
+    dt = 1/240. # pybullet simulation step
     f_stop_thresh = 9.8067 # N of force (1000gf)
     sim_length = 10. # time simulation will run for, in seconds
 
