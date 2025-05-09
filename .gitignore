@@ -1,3 +1,4 @@
 # ignore the virtual environment
 .venv/
+blueberrysim-venv/
 

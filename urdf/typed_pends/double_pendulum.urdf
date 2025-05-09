@@ -6,7 +6,7 @@
 		   type="fixed">
 		<parent link="world" />
 		<child link="base_link" />
-		<origin xyz="0 0 1.5"
+		<origin xyz="0 -.5 .025"
 				rpy="0 0 0" />
 		<axis xyz="0 0 0" />
 	</joint>
@@ -52,7 +52,7 @@
 	<joint name="base_branch_joint" 
 		   type="revolute">
 		<parent link="base_link" />
-		<child link="branch_link" />
+		<child link="branch_link_a" />
 		<origin xyz="0 0 0"
 				rpy="0 0 0" />
 		<axis xyz="0 1 0" />
@@ -65,7 +65,7 @@
 	<!-- First actual branch -->
 	<!-- - - - - - - -->
 	
-	<link name="branch_link">
+	<link name="branch_link_a">
 		<inertial>
 			<mass value="0.05052" />
 			<inertia ixx="0.01051" 
@@ -92,6 +92,58 @@
 					rpy="0 0 0" />
 			<geometry>
 				<cylinder length="0.79" 
+						  radius="0.00608" />
+			</geometry>
+		</collision>
+	</link>
+
+	<!-- - - - - - - -->
+	<!-- Revolute Joint -->
+	<!-- - - - - - - -->
+
+	<joint name="branch_joint_ab"
+		   type="revolute">
+		<parent link="branch_link_a" />
+		<child link="branch_link_b" />
+		<origin xyz="0 0 0.79"
+				rpy="0 0 0" />
+		<axis xyz="0 1 0" />
+		<limit effort="0"
+			   velocity="0"/>
+		<dynamics damping="0" friction="0"/>
+	</joint>
+
+	<!-- - - - - - - -->
+	<!-- Second branch -->
+	<!-- - - - - - - -->
+
+	<link name="branch_link_b">
+		<inertial>
+			<mass value="0.05052" />
+			<inertia ixx="0.01051"
+					 ixy="0.0"
+					 ixz="0.0"
+					 iyy="0.01051"
+					 iyz="0.0"
+					 izz="9.338e-07" />
+			<origin xyz="0 0 .395" />
+		</inertial>
+		<visual>
+			<origin xyz="0 0 .395"
+					rpy="0 0 0" />
+			<geometry>
+				<cylinder length="0.79"
+						  radius="0.00608" />
+			</geometry>
+			<material name="green">
+				<color rgba="0 1 0 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin xyz="0 0 .395"
+					rpy="0 0 0" />
+			<geometry>
+				<cylinder length="0.79"
 						  radius="0.00608" />
 			</geometry>
 		</collision>

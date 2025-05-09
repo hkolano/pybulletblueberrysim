@@ -4,50 +4,156 @@ import pybullet_data
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtCore import QTimer, QThread
+import pyqtgraph as pg
 
+class MainWindow(QMainWindow):
+    def __init__(self, sim, *args, **kwargs):
+        '''initializes a plot at all zeros'''
+        super(MainWindow, self).__init__(*args, **kwargs)
+        self.sim = sim
+        self.win = pg.GraphicsLayoutWidget(show=True, title="Simulation Readouts")
 
-def run_single_pend_simulation():
-    # Environment Parameters
-    dt = .01 # pybullet simulation step
-    q0 = 0.5   # starting position (radian)
-    physicsClient = p.connect(p.GUI) # or p.DIRECT for non-graphical version
-    p.setAdditionalSearchPath(pybullet_data.getDataPath())
-    p.setGravity(0,0,-10)
-    planeId = p.loadURDF("plane.urdf")
-    pd_ctrl = p.loadPlugin("pdControlPlugin")
+        # Universal setup for all plots
+        pg.setConfigOptions(antialias=True)
+        pen = pg.mkPen(color=(0, 0, 255))
+        self.win.setBackground('w')
+        self.win.resize(1000,600)
+      
+        x_timespan_secs = 2
+        self.x = np.linspace(-1*x_timespan_secs+dt, 0, int(x_timespan_secs/dt))
+        self.y = np.zeros(len(self.x))
+        self.y2 = np.zeros(len(self.x))
+        self.Fxs = np.zeros(len(self.x))
+        self.Fzs = np.zeros(len(self.x))
+        self.Mys = np.zeros(len(self.x))
 
-    # Set up data collection
-    data = []
+        # Position plot
+        self.p_pos_plot = self.win.addPlot(title="Pend Position")
+        self.pos_data_line = self.p_pos_plot.plot(x=self.x, y=self.y, pen=pen)
+        # self.p_pos_plot.setYRange(-0.5, 0.5, padding=0)
+        self.p_pos_plot.setLabel('bottom', "Time (s)", unit='s')
+        self.p_pos_plot.setLabel('left', "Position (rad)", unit='rad')
 
-    # Load pendulums
-    pend_pd = p.loadURDF("urdf/single_pendulum.urdf", [0, 0, 0], useFixedBase=True)
+        # Velocity plot
+        self.p_vel_plot = self.win.addPlot(title="Pend Velocity")
+        self.vel_data_line = self.p_vel_plot.plot(x=self.x, y=self.y2, pen=pen)
+        # self.p_vel_plot.setYRange(-1, 1, padding=0)
+        self.p_vel_plot.setLabel('bottom', "Time (s)", unit='s')
+        self.p_vel_plot.setLabel('left', "Velocity (rad/s)", unit='rad/s')
 
-    # Debug text and parameters
-    textColor = [1, 1, 1]
-    textOffset = [0.05, 0, 0.1]
-    p.addUserDebugText("PD Ctrl", textOffset, 
-                       textColor, 
-                       parentObjectUniqueId=pend_pd,
-                       parentLinkIndex=0)
+        self.win.nextRow()
+        self.Fx_plot = self.win.addPlot(title="Reaction Force X")
+        self.Fx_line = self.Fx_plot.plot(x=self.x, y=self.Fxs, pen=pen)
+        # self.Fx_plot.setYRange(-1, 1, padding=0)
+        self.Fx_plot.setLabel('bottom', "Time (s)", unit='s')
+        self.Fx_plot.setLabel('left', "Fx (N)", unit='N')
 
-    kpSlider = p.addUserDebugParameter("KpBranch", 0, 5, .5)
-    kdSlider = p.addUserDebugParameter("KdBranch", 0, .25, .05)
+        self.Fz_plot = self.win.addPlot(title="Reaction Force Z")
+        self.Fz_line = self.Fz_plot.plot(x=self.x, y=self.Fzs, pen=pen)
+        # self.Fz_plot.setYRange(-1, 1, padding=0)
+        self.Fz_plot.setLabel('bottom', "Time (s)", unit='s')
+        self.Fz_plot.setLabel('left', "Fz (N)", unit='N')
 
-    # go to the starting position
-    p.setJointMotorControl2(bodyIndex=pend_pd, jointIndex=1, targetPosition=q0, controlMode=p.POSITION_CONTROL)
-    for _ in range(1000):
-        p.stepSimulation()
+        self.My_plot = self.win.addPlot(title="Reaction Moment Y")
+        self.My_line = self.My_plot.plot(x=self.x, y=self.Mys, pen=pen)
+        # self.My_plot.setYRange(-.1, .1, padding=0)
+        self.My_plot.setLabel('bottom', "Time (s)", unit='s')
+        self.My_plot.setLabel('left', "My (Nm)", unit='Nm')
 
-    # turn off the motor for the free motion
-    p.setJointMotorControl2(bodyIndex=pend_pd, jointIndex=1, targetVelocity=0, controlMode=p.VELOCITY_CONTROL, force=0)
-    p.enableJointForceTorqueSensor(bodyUniqueId=pend_pd, jointIndex=1,enableSensor=True)
-    # p.setRealTimeSimulation(1)
+        
+        # Perform the loop and call the simulation         
+        self.timer = QTimer()
+        self.timer.setInterval(int(1/dt))
+        self.timer.timeout.connect(self.update_plot_data)
+        self.timer.start()
+        
+    def update_plot_data(self):
+        # Update the time 
+        self.x = self.x[1:]  
+        self.x = np.append(self.x, self.x[-1] + dt)
+        
+        self.y = self.y[1:]  
+        data = self.sim.step_simulation()
+        new_y_pt = data[-1]['poses']
+        self.y = np.append(self.y, new_y_pt)
 
-    while p.isConnected():
-        Kp = p.readUserDebugParameter(kpSlider)
-        Kd = p.readUserDebugParameter(kdSlider)
+        self.y2 = self.y2[1:]
+        new_y2_pt = data[-1]['vels']
+        self.y2 = np.append(self.y2, new_y2_pt)
 
-        p.setJointMotorControl2(bodyUniqueId=pend_pd,
+        self.Fxs = self.Fxs[1:]
+        new_Fx = data[-1]['RFx']
+        self.Fxs = np.append(self.Fxs, new_Fx)
+
+        self.Fzs = self.Fzs[1:]
+        new_Fz = data[-1]['RFz']
+        self.Fzs = np.append(self.Fzs, new_Fz)
+
+        self.Mys = self.Mys[1:]
+        new_My = data[-1]['RMy']
+        self.Mys = np.append(self.Mys, new_My)
+        
+        self.pos_data_line.setData(self.x, self.y)
+        self.vel_data_line.setData(self.x, self.y2)
+        self.Fx_line.setData(self.x, self.Fxs)
+        self.Fz_line.setData(self.x, self.Fzs)
+        self.My_line.setData(self.x, self.Mys)
+
+class SinglePendulumSim():
+    def __init__(self):
+        # Environment Parameters
+        q0 = 0.5   # starting position (radian)
+        physicsClient = p.connect(p.GUI) # or p.DIRECT for non-graphical version
+        p.setAdditionalSearchPath(pybullet_data.getDataPath())
+        p.setGravity(0,0,-10)
+        planeId = p.loadURDF("plane.urdf")
+
+        # Set up data collection
+        self.data = []
+        self.data.append({'time':0, 'poses':q0, 'vels':0, 'RFx':0, 
+                'RFy':0,
+                'RFz':0,
+                'RMx':0,
+                'RMy':0,
+                'RMz':0,
+                'AppF':0})
+        # self.plotter = plotter
+
+        # Load pendulums
+        self.pend = p.loadURDF("urdf/single_pendulum.urdf", [0, 0, 0], useFixedBase=True)
+
+        # Debug text and parameters
+        textColor = [1, 1, 1]
+        textOffset = [0.05, 0, 0.1]
+        p.addUserDebugText("PD Ctrl", textOffset, 
+                           textColor, 
+                           parentObjectUniqueId=self.pend,
+                           parentLinkIndex=0)
+
+        self.kpSlider = p.addUserDebugParameter("KpBranch", 0, 5, .5)
+        self.kdSlider = p.addUserDebugParameter("KdBranch", 0, .25, .05)
+
+        self.move_to_starting_position(q0)
+
+    def move_to_starting_position(self, init_pos):
+        # go to the starting position
+        p.setJointMotorControl2(bodyIndex=self.pend, jointIndex=1, targetPosition=init_pos, controlMode=p.POSITION_CONTROL)
+        for _ in range(1000):
+            p.stepSimulation()
+
+        # turn off the motor for the free motion
+        p.setJointMotorControl2(bodyIndex=self.pend, jointIndex=1, targetVelocity=0, controlMode=p.VELOCITY_CONTROL, force=0)
+        p.enableJointForceTorqueSensor(bodyUniqueId=self.pend, jointIndex=1,enableSensor=True)
+
+    def step_simulation(self):
+        # while p.isConnected():
+        Kp = p.readUserDebugParameter(self.kpSlider)
+        Kd = p.readUserDebugParameter(self.kdSlider)
+
+        p.setJointMotorControl2(bodyUniqueId=self.pend,
                                 jointIndex=1,
                                 controlMode=p.PD_CONTROL,
                                 targetVelocity=0,
@@ -55,23 +161,21 @@ def run_single_pend_simulation():
                                 positionGain=Kp,
                                 velocityGain=Kd)
         p.stepSimulation()
-        [cur_pos, cur_vel, reactf,appliedf] = p.getJointState(bodyUniqueId=pend_pd, jointIndex=1)
-        data.append({'poses':cur_pos, 'vels':cur_vel, 'RFx':reactf[0], 
+        [cur_pos, cur_vel, reactf,appliedf] = p.getJointState(bodyUniqueId=self.pend, jointIndex=1)
+        time = self.data[-1]['time']+dt
+        self.data.append({'time':time, 'poses':cur_pos, 'vels':cur_vel, 'RFx':reactf[0], 
                 'RFy':reactf[1],
                 'RFz':reactf[2],
                 'RMx':reactf[3],
                 'RMy':reactf[4],
                 'RMz':reactf[5],
                 'AppF':appliedf})
-        time.sleep(dt)
 
-    df = pd.DataFrame(data)
-    df['times'] = np.linspace(dt, (len(df))*dt, len(df))
-    print(df)
-
-    plot_first_joint_pos_and_vel(df)
-    plot_reaction_forces(df)
-                                 
+        # df = pd.DataFrame(self.data)
+        # df['times'] = np.linspace(dt, (len(df))*dt, len(df))
+        # print(df)
+        return self.data
+                             
 
 def plot_reaction_forces(df):
     """ Plots a 3 x 2 grid of the reaction forces for this run """
@@ -112,4 +216,13 @@ def plot_first_joint_pos_and_vel(df):
     plt.show()
 
 if __name__ == '__main__':
-    run_single_pend_simulation()
+
+    # Environmental parameters
+    dt = .05 # pybullet simulation step
+
+    app = QApplication(sys.argv)
+    sim = SinglePendulumSim() # start simulation
+    window = MainWindow(sim)
+    # window.show()
+  
+    sys.exit(app.exec_())
